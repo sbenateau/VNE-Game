@@ -1,0 +1,139 @@
+######################################################
+#      VNE Game
+#
+#         Author: Simon
+#         Idea:   Sebastien Turpin and Simon Benateau
+#####################################################
+# TO DO: 
+# ajouter une legende indiquant ce qu'est la valeur de variable (ex: moyenne individus)
+
+library(shiny)
+library(memisc) # to view iframe
+# load the functions to run the game
+source('functionGame.R')
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+  # Application title
+  titlePanel("VNE Data Game"),
+  
+  # Sidebar with inputs
+  sidebarLayout(
+    sidebarPanel(
+      textInput("code", "Entrez votre code :", value = ""),
+      submitButton(text = "Validez le code", icon = NULL, width = NULL),
+      numericInput("viewResult", "Quel jeu de données voulez-vous voir ?", 1, min = 1, max = NA)
+    ),
+    
+    # Show a plot of the generated distribution
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Graphique", plotOutput("Plot")),
+        tabPanel("Tableau", tableOutput("Table")),
+        tabPanel("Scientifique", uiOutput("video"))
+      )
+    )
+  )
+)
+
+# Define server logic
+server <- function(input, output) {
+
+  #Import data
+  Data <- reactive({
+    data.frame(getDataInitial())
+  })
+  
+  # Breakdown code
+  Tools <- reactive({
+    separateTools(input$code)
+  })
+  
+  Results <- reactive({
+    code <- input$code
+    
+    if (code != "" ){
+      
+      # Get the data TODO allow different possibilities
+      Data <- Data()
+      
+      #separate code to get clear instructions
+      tools <- Tools()
+      
+      # create a list with size = nomber of tools
+      Results <- vector(mode = "list", length = length(tools))
+      
+      #loop to execute all the steps
+      for (i in 1:length(tools)){
+        # case tool = data
+        if (tools[i] == "D"){
+          Results[[i]] <- Data
+        } else if (tools[i] == "M") {
+          Results[[i]] = randomAll(Results[[i-1]])
+          # case tool = Graph
+        } else if (substring(tools[i], 1, 1) == "R"){
+          Parameters <- separateParametersTreatment(tools[i])
+          Results[[i]] <- Results[[i-1]] %>%
+            group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+            summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+        } else if (substring(tools[i], 1, 1) == "T"){
+          Parameters <- separateParametersTreatment(tools[i])
+          Results[[i]] <- Results[[i-1]] %>%
+            arrange(Parameters[[1]])
+        }
+      }
+      Results
+    }
+  })
+  
+  output$Table <- renderTable({
+    code <- input$code
+    if (code != "" ){
+      Results <- Results()
+      head(Results[[input$viewResult]], 20)
+    }
+  })
+  
+  output$Plot <- renderPlot({
+    code <- input$code
+    if (str_detect(code, "G")){
+      # load results
+      Results <- Results()
+      # load information about the tools
+      tools <- Tools()
+      # get parameters (improve by locating the graph within the code)
+      Parameters <- separateParametersTreatment(tools[length(tools)])
+      # get the name of the column to check few thing
+      colNamesData <- colnames(Results[[length(Results)-1]])
+      # Add errors if the columns are not in the code
+      # if sp is in the dataset, separate by  species (if species as columns then change)
+      if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
+      # if data not summarised plot points else plot barplot
+      if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+      # graph is too specific right now
+      YourPlot <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+        representation +
+        facet
+      YourPlot
+    } else {
+      plot(1,1,type = 'n',ann = FALSE, axes = FALSE)
+      text(1,1,"Votre chaine d'analyse ne contient pas de représentations graphique")
+    }
+  })
+  
+  
+  
+  output$video <- renderUI({
+    if (input$code == "D") {
+      link = "YBEgmD8ik68"
+    } else if (input$code == "DG"){
+      link = "VULkZb6zUNs"
+    }
+    HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
+  })
+  
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+
