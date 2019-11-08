@@ -21,31 +21,36 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       textInput("code", "Entrez votre code :", value = ""),
-      submitButton(text = "Validez le code", icon = NULL, width = NULL),
-      numericInput("viewResult", "Quel jeu de données voulez-vous voir ?", 1, min = 1, max = NA)
+      submitButton(text = "Validez le code", icon = NULL, width = NULL)
+      # ,
+      # numericInput("viewResult", "Quel jeu de données voulez-vous voir ?", 1, min = 1, max = NA)
     ),
     
     # Show a plot of the generated distribution
     mainPanel(
-      tabsetPanel(
-        tabPanel("Graphique", plotOutput("Plot")),
-        tabPanel("Tableau", tableOutput("Table")),
-        tabPanel("Scientifique", uiOutput("video"))
-      )
+      # tabsetPanel(
+      # tabPanel("Graphique", plotOutput("Plot")),
+      # tabPanel("Tableau", tableOutput("Table")),
+      # tabPanel("Scientifique", uiOutput("video"))
+      # )
+      uiOutput("Cards")
     )
   )
 )
 
 # Define server logic
 server <- function(input, output) {
-
+  
+  # Variable initialization
+  rv <- reactiveValues()
+  
   #Import data
   Data <- reactive({
     data.frame(getDataInitial())
   })
   
   # Breakdown code
-  Tools <- reactive({
+  parsedCode <- reactive({
     separateTools(input$code)
   })
   
@@ -86,40 +91,54 @@ server <- function(input, output) {
     }
   })
   
-  output$Table <- renderTable({
-    code <- input$code
-    if (code != "" ){
-      Results <- Results()
-      head(Results[[input$viewResult]], 20)
-    }
+  output$Cards <- renderUI({
+    taglist(
+      lapply(seq_along(parsedCode()), function (toolPosition){
+        renderCardsUI(toolPosition, parsedCode())
+      })
+    )
   })
   
-  output$Plot <- renderPlot({
-    code <- input$code
-    if (str_detect(code, "G")){
-      # load results
-      Results <- Results()
-      # load information about the tools
-      tools <- Tools()
-      # get parameters (improve by locating the graph within the code)
-      Parameters <- separateParametersTreatment(tools[length(tools)])
-      # get the name of the column to check few thing
-      colNamesData <- colnames(Results[[length(Results)-1]])
-      # Add errors if the columns are not in the code
-      # if sp is in the dataset, separate by  species (if species as columns then change)
-      if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
-      # if data not summarised plot points else plot barplot
-      if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
-      # graph is too specific right now
-      YourPlot <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
-        representation +
-        facet
-      YourPlot
-    } else {
-      plot(1,1,type = 'n',ann = FALSE, axes = FALSE)
-      text(1,1,"Votre chaine d'analyse ne contient pas de représentations graphique")
-    }
-  })
+  observe(
+    sapply(seq_along(parsedCode()), function (toolPosition){
+      rv[[toolPosition]] <- eventReactive( callModule(renderCards, toolPosition) )
+    })
+  )
+  
+  # output$Table <- renderTable({
+  #   code <- input$code
+  #   if (code != "" ){
+  #     Results <- Results()
+  #     head(Results[[input$viewResult]], 20)
+  #   }
+  # })
+  # 
+  # output$Plot <- renderPlot({
+  #   code <- input$code
+  #   if (str_detect(code, "G")){
+  #     # load results
+  #     Results <- Results()
+  #     # load information about the tools
+  #     tools <- Tools()
+  #     # get parameters (improve by locating the graph within the code)
+  #     Parameters <- separateParametersTreatment(tools[length(tools)])
+  #     # get the name of the column to check few thing
+  #     colNamesData <- colnames(Results[[length(Results)-1]])
+  #     # Add errors if the columns are not in the code
+  #     # if sp is in the dataset, separate by  species (if species as columns then change)
+  #     if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
+  #     # if data not summarised plot points else plot barplot
+  #     if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+  #     # graph is too specific right now
+  #     YourPlot <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+  #       representation +
+  #       facet
+  #     YourPlot
+  #   } else {
+  #     plot(1,1,type = 'n',ann = FALSE, axes = FALSE)
+  #     text(1,1,"Votre chaine d'analyse ne contient pas de représentations graphique")
+  #   }
+  # })
   
   
   
