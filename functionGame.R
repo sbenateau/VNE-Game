@@ -15,7 +15,7 @@ input = c("Zon", "Zip", "Esp", "Ind", "Hum", "Dif", "Env")
 
 EquivalenceVar <- data.frame(translation, input)
 
-# Function for operation
+# Function for operation ----
 mean2 <- function(x) {
   mean(x, na.rm = TRUE)
 }
@@ -72,21 +72,19 @@ getDataInitial <- function(directory = "data/"){
   jeuDeDonneesReduction[is.na(jeuDeDonneesReduction[ , "Nombre_individus"]) , "Nombre_individus"] <- 0
   
   # pour l'ordre dans les futurs graphiques
-  #-------------------------------------------------
   #Turn your 'treatment' column into a character vector
   jeuDeDonneesReduction$Environnement <- as.character(jeuDeDonneesReduction$Environnement)
   #Then turn it back into a factor with the levels in the correct order
   jeuDeDonneesReduction$Environnement <- factor(jeuDeDonneesReduction$Environnement, levels=c("Rural", "Péri-urbain", "Urbain"))
-  jeuDeDonneesReduction
   
-  
+  return(jeuDeDonneesReduction)
 }
 
-# function for the game
-# -----------------------------
+# functions for the game ----
 
+# [deprecated]
 # get the information for the tool separated
-separateTools <- function (code){
+separateTools <- function (code, sep = ":"){
   # get tool names and operation as separated string
   whereToCut <- gregexpr("([A-Z])(?![a-z])", code, perl = TRUE)
   tools <-  c()
@@ -101,6 +99,7 @@ separateTools <- function (code){
   }
 }
 
+# get the 'arguments' of each tool
 separateParametersTreatment <- function (code){
   #remove tool id
   code <- substr(code, 2, nchar(code))
@@ -117,7 +116,6 @@ separateParametersTreatment <- function (code){
 }
 
 # Treatments
-
 randomAll <- function(df) {
   df2 <- df %>%
     mutate_all(as.character)
@@ -136,7 +134,26 @@ correspond <- function (input, reference){
   as.character(inputColumns$translation)
 }
 
+# [deprecated?]
 printPlot <- function (x) {
   plot(1, 1, type = "n", axes = FALSE, ann = FALSE)
   text(1, 1, x)
 }
+
+# Function for handling shiny tags ----
+
+#' @title uniteTags
+#' 
+#' @description takes a list of HTML tags (type: list; class: shiny.tags)
+#' and return a single shiny tag concatening all others
+uniteTags <- function(tags.list){
+  tagString <- ""
+  sapply(tags.list, function(tag){
+    tagString <<- HTML(as.character(tagString),
+                      as.character(tag))
+  })
+  # browser()
+  tagString <- tagList(tagString)
+  return(tagString)
+}
+
