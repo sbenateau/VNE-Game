@@ -31,7 +31,7 @@ pas espèce dans le dernier graph
 #### "D"
 
 ```{r Rawdata}
-Data <- data.frame(getDataInitial(directory = "../"))
+Data <- data.frame(getDataInitial(directory = "../data/"))
 knitr::kable(head(Data, 10))
 ```
 
