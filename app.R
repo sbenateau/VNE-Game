@@ -1,16 +1,18 @@
 ######################################################
 #      VNE Game
 #
-#         Author: Simon
+#         Author: Simon Benateau
 #         Idea:   Sebastien Turpin and Simon Benateau
 #####################################################
-# TO DO: 
-# ajouter une legende indiquant ce qu'est la valeur de variable (ex: moyenne individus)
+# TODO ajouter une legende indiquant ce qu'est la valeur de variable (ex: moyenne individus)
+# D:RZonEnvSoInd:REnvMoInd:GEnvXyInd
 
 library(shiny)
 library(memisc) # to view iframe
+library(shinyBS)
 # load the functions to run the game
 source('functionGame.R')
+source('RenderCards.R')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -51,19 +53,21 @@ server <- function(input, output) {
   
   # Breakdown code
   parsedCode <- reactive({
-    separateTools(input$code)
+    unlist(strsplit(input$code, ":"))
   })
   
+  # Reactive containing a list for each tool.
   Results <- reactive({
     code <- input$code
     
     if (code != "" ){
       
-      # Get the data TODO allow different possibilities
+      # Get the data
       Data <- Data()
+      # TODO allow different possibilities
       
       #separate code to get clear instructions
-      tools <- Tools()
+      tools <- parsedCode()
       
       # create a list with size = nomber of tools
       Results <- vector(mode = "list", length = length(tools))
@@ -86,25 +90,43 @@ server <- function(input, output) {
           Results[[i]] <- Results[[i-1]] %>%
             arrange(Parameters[[1]])
         }
+        else{
+          msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ""), ")\n")
+          warning(msg)
+        }
+        # TODO in case of typo, any default value?
       }
       Results
     }
   })
   
+  # Procedurally generate UI by calling multiple times the renderCards module
   output$Cards <- renderUI({
-    taglist(
-      lapply(seq_along(parsedCode()), function (toolPosition){
-        renderCardsUI(toolPosition, parsedCode())
-      })
-    )
+    # Check for input's content
+    if(length(parsedCode()) != 0){
+      do.call(bsCollapse,
+              lapply(seq_along(parsedCode()), function (toolPosition){
+                renderCardsUI(toolPosition, parsedCode())
+              })
+      )
+    }
+    else
+      # no display
+      NULL
   })
   
+  # Procedurally generate server by calling multiple times renderCards module's server
   observe(
     sapply(seq_along(parsedCode()), function (toolPosition){
-      rv[[toolPosition]] <- eventReactive( callModule(renderCards, toolPosition) )
+      rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
+                                                      toolPosition, # repeated to be given as additional argument
+                                                      parsedCode(), 
+                                                      Results()[[toolPosition]])
     })
   )
   
+  # Old 
+  {
   # output$Table <- renderTable({
   #   code <- input$code
   #   if (code != "" ){
@@ -142,14 +164,16 @@ server <- function(input, output) {
   
   
   
-  output$video <- renderUI({
-    if (input$code == "D") {
-      link = "YBEgmD8ik68"
-    } else if (input$code == "DG"){
-      link = "VULkZb6zUNs"
-    }
-    HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
-  })
+  # output$video <- renderUI({
+  #   if (input$code == "D") {
+  #     link = "YBEgmD8ik68"
+  #   } else if (input$code == "DG"){
+  #     link = "VULkZb6zUNs"
+  #   }
+  #   HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
+  # })
+  
+  }
   
 }
 
