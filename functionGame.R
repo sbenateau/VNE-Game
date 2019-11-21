@@ -4,16 +4,6 @@ library(ggplot2)
 library(stringr)
 library(tidyr)
 
-translation = c("Numero_observation", 
-                "Code_postal_etablissement", 
-                "Espece", 
-                "Nombre_individus", 
-                "Humidite_sol",
-                "Difficulte_enfoncer_crayon",
-                "Environnement")
-input = c("Zon", "Zip", "Esp", "Ind", "Hum", "Dif", "Env")
-
-EquivalenceVar <- data.frame(translation, input)
 
 # Function for operation ----
 mean2 <- function(x) {
@@ -32,15 +22,6 @@ lengthSupZero <- function(x) {
   length(x[x>0])
 }
 
-
-translation = c("mean2", 
-                "sd2", 
-                "sum2",
-                "length",
-                "lengthSupZero")
-input = c("Mo", "Ec", "So","Co","No")
-
-EquivalenceFun <- data.frame(translation, input)
 
 # import data for  the game
 getDataInitial <- function(directory = "data/"){

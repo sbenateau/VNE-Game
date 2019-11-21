@@ -89,6 +89,20 @@ server <- function(input, output) {
           Parameters <- separateParametersTreatment(tools[i])
           Results[[i]] <- Results[[i-1]] %>%
             arrange(Parameters[[1]])
+        } else if (substring(tools[i], 1, 1) == "G"){
+              # get parameters (improve by locating the graph within the code)
+              Parameters <- separateParametersTreatment(tools[length(tools)])
+              # get the name of the column to check few thing
+              colNamesData <- colnames(Results[[length(Results)-1]])
+              # Add errors if the columns are not in the code
+              # if sp is in the dataset, separate by  species (if species as columns then change)
+              if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
+              # if data not summarised plot points else plot barplot
+              if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+              # graph is too specific right now
+              Results[[i]] <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+                representation +
+                facet
         }
         else{
           msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ""), ")\n")
