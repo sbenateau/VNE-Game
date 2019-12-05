@@ -19,7 +19,8 @@ renderCardsUI <- function(id, parsedCode) {
     bsCollapsePanel(
       title = switch(toolID,
                      G = "Graphique",
-                     S = "Sciences",
+                     R = "Regrouper des lignes",
+                     S = "Scientifique",
                      D = "Données",
                      "Autre outil"),
       tagList(
@@ -34,7 +35,7 @@ renderCardsUI <- function(id, parsedCode) {
 }
 
 renderCards <- function(input, output, session, 
-                        id, parsedCode, Results) {
+                        id, parsedCode, Results, fullCode) {
   toolCode <- parsedCode[id]
   
   # retrieve first letter: what does the tool do
@@ -45,13 +46,15 @@ renderCards <- function(input, output, session,
   output[[id]] <- switch(unlist(strsplit(toolCode, ""))[1],
                          G = renderPlot(Results),
                          S = renderUI({
-                           if (input$code == "D") {
-                             link = "YBEgmD8ik68"
-                           } else if (input$code == "DG"){
-                             link = "VULkZb6zUNs"
+                           if (fullCode == "D:S") {
+                             link = "377267799" # Seulement le tableau des données
+                           } else if (fullCode == "D:GEnvXyInd:S"){
+                             link = "377267820"
+                           } else {
+                             link = "377267700"
                            }
-                           HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
+                           HTML(paste0('<iframe src="https://player.vimeo.com/video/',link,'" width="640" height="480" frameborder="0" allow="autoplay" allowfullscreen></iframe>'))
                          }),
-                         renderTable(head(Results)))
+                         renderTable(head(Results,40)))
   
 }

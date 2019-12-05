@@ -54,9 +54,9 @@ getDataInitial <- function(directory = "data/"){
   
   # pour l'ordre dans les futurs graphiques
   #Turn your 'treatment' column into a character vector
-  jeuDeDonneesReduction$Environnement <- as.character(jeuDeDonneesReduction$Environnement)
   #Then turn it back into a factor with the levels in the correct order
-  jeuDeDonneesReduction$Environnement <- factor(jeuDeDonneesReduction$Environnement, levels=c("Rural", "Péri-urbain", "Urbain"))
+  jeuDeDonneesReduction$Environnement <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
+  jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("Rural", "Péri-urbain", "Urbain"))
   
   return(jeuDeDonneesReduction)
 }
@@ -96,7 +96,10 @@ separateParametersTreatment <- function (code){
   informationR
 }
 
-# Treatments
+#' @title randomAll
+#' 
+#' @description randomize all columns of a data.frame
+#' @param df An input data.frame
 randomAll <- function(df) {
   df2 <- df %>%
     mutate_all(as.character)
@@ -108,6 +111,13 @@ randomAll <- function(df) {
   df2
 }
 
+
+#' @title correspond
+#' 
+#' @description translate codes to variables or function
+#' @param input A vector of the input code
+#' @param reference A data.frame table that contains the correspondance between the code and the variable or function
+#' 
 correspond <- function (input, reference){
   inputDf <-  data.frame(input)
   colnames(inputDf) <- "input"
