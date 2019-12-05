@@ -1,8 +1,8 @@
-"";"translation";"input"
-"1";"Numero_observation";"Zon"
-"2";"Code_postal_etablissement";"Zip"
-"3";"Espece";"Esp"
-"4";"Nombre_individus";"Ind"
-"5";"Humidite_sol";"Hum"
-"6";"Difficulte_enfoncer_crayon";"Dif"
-"7";"Environnement";"Env"
+,translation,input
+1,Numero_observation,Num
+2,Code_postal_etablissement,Zip
+3,Espece,Esp
+4,Nombre_individus,Ind
+5,Humidite_sol,Hum
+6,Difficulte_enfoncer_crayon,Dif
+7,Environnement,Env
