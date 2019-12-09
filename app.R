@@ -45,6 +45,21 @@ server <- function(input, output) {
     data.frame(getDataInitial())
   })
   
+  #Import map
+  mapToPlot <- reactive({
+    extraWD = "data"
+    if (!file.exists(file.path(extraWD, "departement.zip"))) {
+      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
+      download.file(githubURL, file.path(extraWD, "departement.zip"))
+      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
+    }
+    departements_L93 <- st_read(dsn = extraWD, layer = "DEPARTEMENT",
+                                quiet = TRUE) %>% 
+      rename(Departement = CODE_DEPT) %>%
+      st_transform(2154)
+    departements_L93
+  })
+  
   # Breakdown code
   parsedCode <- reactive({
     unlist(strsplit(input$code, ":"))
@@ -62,6 +77,7 @@ server <- function(input, output) {
       
       #separate code to get clear instructions
       tools <- parsedCode()
+      #tools <- unlist(strsplit(code, ":"))
       
       # create a list with size = nomber of tools
       Results <- vector(mode = "list", length = length(tools))
@@ -75,27 +91,51 @@ server <- function(input, output) {
           Results[[i]] = randomAll(Results[[i-1]])
         } else if (substring(tools[i], 1, 1) == "R"){
           Parameters <- separateParametersTreatment(tools[i])
-          Results[[i]] <- Results[[i-1]] %>%
-            group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-            summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+          if (Parameters[[3]] == "Mo"){
+            Results[[i]] <- Results[[i-1]] %>%
+              group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+              summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
+              rename(Nombre_individus = mean)
+          } else {
+            Results[[i]] <- Results[[i-1]] %>%
+              group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+              summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+          }
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
           Results[[i]] <- Results[[i-1]] %>%
-            arrange(Parameters[[1]])
+            arrange(Parameters[[2]])
         } else if (substring(tools[i], 1, 1) == "G"){
           # get parameters (improve by locating the graph within the code)
-          Parameters <- separateParametersTreatment(tools[length(tools)])
+          Parameters <- separateParametersTreatment(tools[i])
           # get the name of the column to check few thing
-          colNamesData <- colnames(Results[[length(Results)-1]])
+          colNamesData <- colnames(Results[[i-1]])
           # Add errors if the columns are not in the code
           # if sp is in the dataset, separate by  species (if species as columns then change)
           if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
           # if data not summarised plot points else plot barplot
-          if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+          if (nrow(Results[[i-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
           # graph is too specific right now
-          Results[[i]] <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+          Results[[i]] <- ggplot(Results[[i-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
             representation +
-            facet
+            facet +
+            theme_minimal()
+        } else if (substring(tools[i], 1, 1) == "B"){
+          Parameters <- separateParametersTreatment(tools[i-1])
+          Results[[i-1]]$data <- Results[[i-1]]$data %>%
+            mutate(ymin = Nombre_individus + se,
+                   ymax = Nombre_individus - se)
+          Results[[i]] <- Results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2)
+        } else if (substring(tools[i], 1, 1) == "P"){
+          Parameters <- separateParametersTreatment(tools[i])
+          departements_L93 <- mapToPlot()
+          geoData = left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
+            st_transform(2154)
+          
+          Results[[i]] <- tm_shape(geoData) +
+            tm_borders() +
+            tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+          
         }
         else{
           msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ":"), ")\n")
@@ -111,80 +151,79 @@ server <- function(input, output) {
   output$Cards <- renderUI({
     # Check for input's content
     if(length(parsedCode()) != 0){
-        do.call(bsCollapse,
-                lapply(seq_along(parsedCode()), function (toolPosition){
-                  renderCardsUI(toolPosition, parsedCode())
-                })
-        )
-      }
-      else
-        # no display
-        NULL
-    })
-      
-      # Procedurally generate server by calling multiple times renderCards module's server
-      observe(
-        sapply(seq_along(parsedCode()), function (toolPosition){
-          rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
-                                                          toolPosition, # repeated to be given as additional argument
-                                                          parsedCode(), 
-                                                          Results()[[toolPosition]], input$code)
-        })
+      do.call(bsCollapse,
+              lapply(seq_along(parsedCode()), function (toolPosition){
+                renderCardsUI(toolPosition, parsedCode())
+              })
       )
-      
-      # Old 
-      {
-        # output$Table <- renderTable({
-        #   code <- input$code
-        #   if (code != "" ){
-        #     Results <- Results()
-        #     head(Results[[input$viewResult]], 20)
-        #   }
-        # })
-        # 
-        # output$Plot <- renderPlot({
-        #   code <- input$code
-        #   if (str_detect(code, "G")){
-        #     # load results
-        #     Results <- Results()
-        #     # load information about the tools
-        #     tools <- Tools()
-        #     # get parameters (improve by locating the graph within the code)
-        #     Parameters <- separateParametersTreatment(tools[length(tools)])
-        #     # get the name of the column to check few thing
-        #     colNamesData <- colnames(Results[[length(Results)-1]])
-        #     # Add errors if the columns are not in the code
-        #     # if sp is in the dataset, separate by  species (if species as columns then change)
-        #     if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
-        #     # if data not summarised plot points else plot barplot
-        #     if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
-        #     # graph is too specific right now
-        #     YourPlot <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
-        #       representation +
-        #       facet
-        #     YourPlot
-        #   } else {
-        #     plot(1,1,type = 'n',ann = FALSE, axes = FALSE)
-        #     text(1,1,"Votre chaine d'analyse ne contient pas de représentations graphique")
-        #   }
-        # })
-        
-        
-        
-        # output$video <- renderUI({
-        #   if (input$code == "D") {
-        #     link = "YBEgmD8ik68"
-        #   } else if (input$code == "DG"){
-        #     link = "VULkZb6zUNs"
-        #   }
-        #   HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
-        # })
-        
-      }
-      
+    }
+    else
+      # no display
+      NULL
+  })
+  
+  # Procedurally generate server by calling multiple times renderCards module's server
+  observe(
+    sapply(seq_along(parsedCode()), function (toolPosition){
+      rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
+                                                      toolPosition, # repeated to be given as additional argument
+                                                      parsedCode(), 
+                                                      Results()[[toolPosition]], input$code)
+    })
+  )
+  
+  # Old 
+  {
+    # output$Table <- renderTable({
+    #   code <- input$code
+    #   if (code != "" ){
+    #     Results <- Results()
+    #     head(Results[[input$viewResult]], 20)
+    #   }
+    # })
+    # 
+    # output$Plot <- renderPlot({
+    #   code <- input$code
+    #   if (str_detect(code, "G")){
+    #     # load results
+    #     Results <- Results()
+    #     # load information about the tools
+    #     tools <- Tools()
+    #     # get parameters (improve by locating the graph within the code)
+    #     Parameters <- separateParametersTreatment(tools[length(tools)])
+    #     # get the name of the column to check few thing
+    #     colNamesData <- colnames(Results[[length(Results)-1]])
+    #     # Add errors if the columns are not in the code
+    #     # if sp is in the dataset, separate by  species (if species as columns then change)
+    #     if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
+    #     # if data not summarised plot points else plot barplot
+    #     if (nrow(Results[[length(Results)-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+    #     # graph is too specific right now
+    #     YourPlot <- ggplot(Results[[length(Results)-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+    #       representation +
+    #       facet
+    #     YourPlot
+    #   } else {
+    #     plot(1,1,type = 'n',ann = FALSE, axes = FALSE)
+    #     text(1,1,"Votre chaine d'analyse ne contient pas de représentations graphique")
+    #   }
+    # })
+    
+    
+    
+    # output$video <- renderUI({
+    #   if (input$code == "D") {
+    #     link = "YBEgmD8ik68"
+    #   } else if (input$code == "DG"){
+    #     link = "VULkZb6zUNs"
+    #   }
+    #   HTML(paste0('<iframe width="560" height="315" src="https://www.youtube.com/embed/',link,'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'))
+    # })
+    
   }
   
-  # Run the application 
-  shinyApp(ui = ui, server = server)
-  
-  
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+

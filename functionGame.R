@@ -1,8 +1,16 @@
 library(data.table)
 library(dplyr)
+library(reshape2)
 library(ggplot2)
 library(stringr)
 library(tidyr)
+library(sf)
+library(tmap)
+library(rlang)
+
+# load correspondance between code and variables and functions
+EquivalenceVar <- read.csv("data/EquivalenceVar.csv", sep = ",", row.names = 1)
+EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 
 
 # Function for operation ----
@@ -18,8 +26,17 @@ sum2 <- function(x) {
   sum(x, na.rm = TRUE)
 }
 
+median2 <- function(x) {
+  median(x, na.rm = TRUE)
+}
+
 lengthSupZero <- function(x) {
   length(x[x>0])
+}
+
+se <- function(x){
+  x2 <- na.omit(x)
+  sd(x2)/sqrt(length(x2))
 }
 
 
@@ -27,27 +44,41 @@ lengthSupZero <- function(x) {
 getDataInitial <- function(directory = "data/"){
   # Upload complete data Earth Worm
   jeuDeDonnees <- fread(paste0(directory,"VersDeTerre.csv"))
+  
   # add placette (to keep the number of row)
-  Placette <- rep(c(1,2,3),nrow(jeuDeDonnees)/3)
+  Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
   jeuDeDonnees$Placette <- Placette
   # Reduce columns nomber and add juveniles and adults
   jeuDeDonneesReduction <- jeuDeDonnees %>%
     rename(Numero_observation = numero_observation, 
            Code_postal = code_postal_etablissement,
+           Longitude = longitude,
+           Latitude = latitude,
            Nombre_individus = nb_ind,
            Humidite_sol = humidite_sol,
            Environnement = environnement,
-           Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon) %>%
+           Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
+           Temperature = temperature_durant_obs) %>%
     mutate(Espece = str_remove_all(sp, fixed(" (juvénile)")))  %>%
     mutate(Espece = str_remove_all(Espece, fixed("s"))) %>%
+    mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
     group_by(Numero_observation,
-             Code_postal,
+             Placette,
              Espece,
+             Environnement,
              Humidite_sol,
              Difficulte_enfoncer_crayon,
-             Environnement,
-             Placette) %>%
+             Temperature,
+             Code_postal,
+             Departement,
+             Longitude,
+             Latitude) %>%
     summarise(Nombre_individus = sum2(Nombre_individus))
+
+
+  # reorder columns
+  colnamesDf <- colnames(jeuDeDonneesReduction) 
+  jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
   
   #Remplacer NA par 0
   jeuDeDonneesReduction[is.na(jeuDeDonneesReduction[ , "Nombre_individus"]) , "Nombre_individus"] <- 0
@@ -56,8 +87,10 @@ getDataInitial <- function(directory = "data/"){
   #Turn your 'treatment' column into a character vector
   #Then turn it back into a factor with the levels in the correct order
   jeuDeDonneesReduction$Environnement <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
-  jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("Rural", "Péri-urbain", "Urbain"))
-  
+  jeuDeDonneesReduction$Humidite_sol <- factor(as.character(jeuDeDonneesReduction$Humidite_sol), levels=c("humide", "engorge", "sec", ""))
+  levels(jeuDeDonneesReduction$Humidite_sol)[4] <- "Donnees_manquantes"
+  jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("tres_facile", "facile", "peu_difficile", "difficile", ""))
+  levels(jeuDeDonneesReduction$Difficulte_enfoncer_crayon)[5] <- "Donnees_manquantes"
   return(jeuDeDonneesReduction)
 }
 
@@ -121,7 +154,7 @@ randomAll <- function(df) {
 correspond <- function (input, reference){
   inputDf <-  data.frame(input)
   colnames(inputDf) <- "input"
-  inputColumns <- inner_join(inputDf, reference,by="input")
+  inputColumns <- inner_join(inputDf, reference, by="input")
   as.character(inputColumns$translation)
 }
 
