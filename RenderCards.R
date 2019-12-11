@@ -55,10 +55,14 @@ renderCards <- function(input, output, session,
                          S = renderUI({
                            # Découpage du code
                            # noms des outils
-                           toolUsed <-unlist(lapply(strsplit(fullCode, ":"), function(x) substr(x,0,1)))
-                           toolUsed <- toolUsed[!sapply(toolUsed, function (x) x == "S")]
+                           AllTools <- unlist(strsplit(fullCode, ":"))
+                           AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
+                           toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
                            # variables utilisées
-                           toolUsed <-unlist(lapply(strsplit(fullCode, ":"), function(x) substr(x,0,1)))
+                           varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
+                           # fonctions utilisées
+                           funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
+                           funUsed <- str_sub(funUsed, start = 1, end = 2)
                            # function utilisées
                            if (!"D" %in% toolUsed) { # no data
                              # Il manque les données : vidéo à refaire
@@ -68,12 +72,20 @@ renderCards <- function(input, output, session,
                            } else if ("M" %in% toolUsed){ # random all was used
                              link = "377267700"
                            } else if ("P" %in% toolUsed) { # map
-                             # Pas de carte nécessaire : vidéo à refaire
+                             # Pas de carte nécessaire pour répondre à la question : vidéo à refaire
                              link = "1143628"
-                           } else if (fullCode == "D:GEnvXyInd:S"){
-                             link = "377267820"
+                           } else if (!"G" %in% toolUsed){ # No graph
+                             
+                           } else if (!"G" %in% toolUsed){ # No graph
+                             # Manque de graph nécessaire : vidéo à refaire
+                             link = "1143628"
+                           } else if (!"B" %in% toolUsed){ # No error bars
+                             link = "1143628"
+                           } else if ("TOUT BONNN"){ # good graph
+                             link = "377267723"
                            } else {
-                             link = "377267700"
+                             link = sample(c("377267872", "377267851"))
+                             
                            }
                            HTML(paste0('<iframe src="https://player.vimeo.com/video/',link,'" width="640" height="480" frameborder="0" allow="autoplay" allowfullscreen></iframe>'))
                          }),

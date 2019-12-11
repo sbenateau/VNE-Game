@@ -85,7 +85,7 @@ server <- function(input, output) {
       #loop to execute all the steps
       for (i in 1:length(tools)){
         # case tool = data
-        if (tools[i] == "D"){
+        if (substring(tools[i], 1, 1) ==  "D"){
           Results[[i]] <- Data
         } else if (tools[i] == "M") {
           Results[[i]] = randomAll(Results[[i-1]])

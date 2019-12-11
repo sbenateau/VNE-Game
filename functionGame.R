@@ -87,7 +87,7 @@ getDataInitial <- function(directory = "data/"){
   #Turn your 'treatment' column into a character vector
   #Then turn it back into a factor with the levels in the correct order
   jeuDeDonneesReduction$Environnement <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
-  jeuDeDonneesReduction$Humidite_sol <- factor(as.character(jeuDeDonneesReduction$Humidite_sol), levels=c("humide", "engorge", "sec", ""))
+  jeuDeDonneesReduction$Humidite_sol <- factor(as.character(jeuDeDonneesReduction$Humidite_sol), levels=c("engorge", "humide", "sec", ""))
   levels(jeuDeDonneesReduction$Humidite_sol)[4] <- "Donnees_manquantes"
   jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("tres_facile", "facile", "peu_difficile", "difficile", ""))
   levels(jeuDeDonneesReduction$Difficulte_enfoncer_crayon)[5] <- "Donnees_manquantes"
