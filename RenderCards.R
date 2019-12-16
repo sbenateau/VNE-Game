@@ -64,18 +64,32 @@ renderCards <- function(input, output, session,
                            funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
                            funUsed <- str_sub(funUsed, start = 1, end = 2)
                            # function utilisées
-                           if (!"D" %in% toolUsed) { # no data
+                           if (!"D" %in% toolUsed) { # Pas de données
                              # Il manque les données : vidéo à refaire
                              link = "1143628"
-                           } else if (length(toolUsed) == 1){ # only data
+                           } else if (length(toolUsed) == 1){ # Seulement les données
                              link = "377267769"
-                           } else if ("M" %in% toolUsed){ # random all was used
+                           } else if ("M" %in% toolUsed){ # utilisation de random all (non souhaité)
+                             # améliorer la vidéo en n'ayant pas forcement de graph
                              link = "377267700"
-                           } else if ("P" %in% toolUsed) { # map
+                           } else if ("P" %in% toolUsed) { # Utilisation d'une carte (non souhaité)
                              # Pas de carte nécessaire pour répondre à la question : vidéo à refaire
                              link = "1143628"
-                           } else if (!"G" %in% toolUsed){ # No graph
-                             
+                           } else if (!"Env" %in% varUsed){ # Pas env
+                             # video à faire manque la carte environnement
+                             link = "1143628"
+                           } else if (!"R" %in% toolUsed){ # Pas de regroupement
+                             # regroupement souhaitable
+                             link = "377267820"
+                           } else if ("Co" %in% funUsed){ # comptage
+                             # fonction non adaptée
+                             link = "377267820"
+                           } else if (!"Pla" %in% varUsed){ # Pas placette
+                             # video à faire manque la carte placette
+                             link = "1143628"
+                           } else if (!"Num" %in% varUsed){ # Pas numéro d'observation
+                             # video à faire manque la carte placette
+                             link = "1143628"
                            } else if (!"G" %in% toolUsed){ # No graph
                              # Manque de graph nécessaire : vidéo à refaire
                              link = "1143628"
@@ -83,8 +97,8 @@ renderCards <- function(input, output, session,
                              link = "1143628"
                            } else if ("TOUT BONNN"){ # good graph
                              link = "377267723"
-                           } else {
-                             link = sample(c("377267872", "377267851"))
+                           } else { # nope
+                             link = sample(c("377267872", "377267851", "377267555"))
                              
                            }
                            HTML(paste0('<iframe src="https://player.vimeo.com/video/',link,'" width="640" height="480" frameborder="0" allow="autoplay" allowfullscreen></iframe>'))

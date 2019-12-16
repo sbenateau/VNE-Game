@@ -18,7 +18,7 @@ source('RenderCards.R')
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   # Application title
-  titlePanel("Jeu sur les données"),
+  titlePanel("Datathon"),
   
   # Sidebar with inputs
   sidebarLayout(
