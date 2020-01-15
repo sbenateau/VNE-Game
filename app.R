@@ -36,7 +36,8 @@ ui <- fluidPage(
     # Show the outputs from the treatment
     mainPanel(
       uiOutput("Cards"),
-      tableOutput("Debug")
+      tableOutput("Debug"),
+      textOutput("Error")
     )
   )
 )
@@ -172,6 +173,7 @@ server <- function(input, output) {
       NULL
   })
   output$Debug <- renderTable({
+    fullCode <- input$code
     Debug <- vector(mode = "list", length = 1)
     # Découpage du code
     informations <- codeInformation(fullCode)
@@ -189,6 +191,34 @@ server <- function(input, output) {
     Debug[[11]] <- c(!"G" %in% informations$toolUsed, '!"G" %in% informations$toolUsed', 'Pas de graphique')
     Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
     matrix(unlist(Debug), ncol = 3, byrow = TRUE)
+  })
+  
+  output$Error <- renderText({
+    # Découpage du code
+    fullCode <- input$code
+    informations <- codeInformation(fullCode)
+    missingVariable <- informations$varUsed[!informations$varUsed %in% as.character(EquivalenceVar$input)]
+    message <- c()
+    if (length(missingVariable) == 1){
+      message <- c(message, paste("La variable : ", missingVariable, "n'a pas été trouvée, "))
+    } else if (length(missingVariable) > 1){
+      message <- c(message, paste("Les variables : ", paste(missingVariable, collapse = ", "), "n'ont pas été trouvées, "))
+    }
+    missingFunction <- informations$funUsed[!informations$funUsed %in% as.character(EquivalenceFun$input)]
+    if (length(missingFunction) == 1){
+      message <- c(message, paste("La fonction : ", missingFunction, "n'a pas été trouvée, "))
+    } else if (length(missingFunction) > 1){
+      message <- c(message, paste("Les fonctions : ", paste(missingFunction, collapse = ", "), "n'ont pas été trouvées, "))
+    }
+    missingTool <- informations$toolUsed[!informations$toolUsed %in% c("D", "M", "R", "P", "T", "G", "B" )]
+    if (length(missingTool) == 1){
+      message <- c(message, paste("L'outil : ", missingTool, "n'a pas été trouvé, "))
+    } else if (length(missingTool) > 1){
+      message <- c(message, paste("Les outils : ", paste(missingTool, collapse = ", "), "n'ont pas été trouvés, "))
+    }
+    if (length(missingVariable) >= 1 | length(missingFunction) >= 1 | length(missingTool) >= 1){
+      paste(paste(message, collapse = ""), "Vérifiez votre code.")
+    }
   })
   
   # Procedurally generate server by calling multiple times renderCards module's server
