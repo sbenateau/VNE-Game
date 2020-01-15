@@ -174,28 +174,20 @@ server <- function(input, output) {
   output$Debug <- renderTable({
     Debug <- vector(mode = "list", length = 1)
     # Découpage du code
-    # noms des outils
-    AllTools <- unlist(strsplit(input$code, ":"))
-    AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
-    toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
-    # variables utilisées
-    varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
-    # fonctions utilisées
-    funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
-    funUsed <- str_sub(funUsed, start = 1, end = 2)
+    informations <- codeInformation(fullCode)
     # function utilisées
-    Debug[[1]] <- c(!"D" %in% toolUsed, '!"D" %in% toolUsed', 'Pas de données')
-    Debug[[2]] <- c(length(toolUsed) == 1, 'length(toolUsed) == 1', 'Seulement les données')
-    Debug[[3]] <- c("M" %in% toolUsed, '"M" %in% toolUsed', 'utilisation de random all (non souhaité)')
-    Debug[[4]] <- c("P" %in% toolUsed, '"P" %in% toolUsed', 'Utilisation dune carte (non souhaité)')
-    Debug[[5]] <- c(!"Env" %in% varUsed, '!"Env" %in% varUsed', 'anque Environnement dans les variables')
-    Debug[[6]] <- c(!"R" %in% toolUsed, '!"R" %in% toolUsed', 'Pas de regroupement')
-    Debug[[7]] <- c("So" %in% funUsed & !"Mo" %in% funUsed, '"So" %in% funUsed & !"Mo" %in% funUsed', 'Pas de données')
-    Debug[[8]] <- c("Co" %in% funUsed, '"Co" %in% funUsed', 'Utilisation dun comptage (non souhaité)')
-    Debug[[9]] <- c(!"Pla" %in% varUsed, '!"Pla" %in% varUsed', 'Manque placette dans les variables')
-    Debug[[10]] <- c(!"Num" %in% varUsed, '!"Num" %in% varUsed', 'Manque numéro dobservation  dans les variables')
-    Debug[[11]] <- c(!"G" %in% toolUsed, '!"G" %in% toolUsed', 'Pas de graphique')
-    Debug[[12]] <- c(!"B" %in% toolUsed, '!"B" %in% toolUsed', 'Pas de barres derreur')
+    Debug[[1]] <- c(!"D" %in% informations$toolUsed, '!"D" %in% informations$toolUsed', 'Pas de données')
+    Debug[[2]] <- c(length(informations$toolUsed) == 1, 'length(toolUsed) == 1', 'Seulement les données')
+    Debug[[3]] <- c("M" %in% informations$toolUsed, '"M" %in% informations$toolUsed', 'utilisation de random all (non souhaité)')
+    Debug[[4]] <- c("P" %in% informations$toolUsed, '"P" %in% informations$toolUsed', 'Utilisation dune carte (non souhaité)')
+    Debug[[5]] <- c(!"Env" %in% informations$varUsed, '!"Env" %in% informations$varUsed', 'anque Environnement dans les variables')
+    Debug[[6]] <- c(!"R" %in% informations$toolUsed, '!"R" %in% informations$toolUsed', 'Pas de regroupement')
+    Debug[[7]] <- c("So" %in% informations$funUsed & !"Mo" %in% informations$funUsed, '"So" %in% informations$funUsed & !"Mo" %in% informations$funUsed', 'Pas de données')
+    Debug[[8]] <- c("Co" %in% informations$funUsed, '"Co" %in% informations$funUsed', 'Utilisation dun comptage (non souhaité)')
+    Debug[[9]] <- c(!"Pla" %in% informations$varUsed, '!"Pla" %in% informations$varUsed', 'Manque placette dans les variables')
+    Debug[[10]] <- c(!"Num" %in% informations$varUsed, '!"Num" %in% informations$varUsed', 'Manque numéro dobservation  dans les variables')
+    Debug[[11]] <- c(!"G" %in% informations$toolUsed, '!"G" %in% informations$toolUsed', 'Pas de graphique')
+    Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
     matrix(unlist(Debug), ncol = 3, byrow = TRUE)
   })
   
