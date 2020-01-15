@@ -19,6 +19,7 @@ renderCardsUI <- function(id, parsedCode) {
     bsCollapsePanel(
       title = switch(toolID,
                      G = "Graphique",
+                     M = "Mélanger les données",
                      B = "Graphique avec barres d'erreurs",
                      R = "Regrouper des lignes",
                      S = "Scientifique",
@@ -54,46 +55,41 @@ renderCards <- function(input, output, session,
                          B = renderPlot(Results),
                          S = renderUI({
                            # Découpage du code
-                           # noms des outils
-                           AllTools <- unlist(strsplit(fullCode, ":"))
-                           AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
-                           toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
-                           # variables utilisées
-                           varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
-                           # fonctions utilisées
-                           funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
-                           funUsed <- str_sub(funUsed, start = 1, end = 2)
-                           # function utilisées
-                           if (!"D" %in% toolUsed) { # Pas de données
+                           informations <- codeInformation(fullCode)
+
+                           if (!"D" %in% informations$toolUsed) { # Pas de données
                              # Il manque les données : vidéo à refaire
                              link = "1143628"
-                           } else if (length(toolUsed) == 1){ # Seulement les données
+                           } else if (length(informations$toolUsed) == 1){ # Seulement les données
                              link = "377267769"
-                           } else if ("M" %in% toolUsed){ # utilisation de random all (non souhaité)
+                           } else if ("M" %in% informations$toolUsed){ # utilisation de random all (non souhaité)
                              # améliorer la vidéo en n'ayant pas forcement de graph
                              link = "377267700"
-                           } else if ("P" %in% toolUsed) { # Utilisation d'une carte (non souhaité)
+                           } else if ("P" %in% informations$toolUsed) { # Utilisation d'une carte (non souhaité)
                              # Pas de carte nécessaire pour répondre à la question : vidéo à refaire
                              link = "1143628"
-                           } else if (!"Env" %in% varUsed){ # Pas env
+                           } else if (!"Env" %in% informations$varUsed){ # Pas env
                              # video à faire manque la carte environnement
                              link = "1143628"
-                           } else if (!"R" %in% toolUsed){ # Pas de regroupement
+                           } else if (!"R" %in% informations$toolUsed){ # Pas de regroupement
                              # regroupement souhaitable
                              link = "377267820"
-                           } else if ("Co" %in% funUsed){ # comptage
+                           } else if ("So" %in% informations$funUsed & !"Mo" %in% informations$funUsed){ # Seulement une somme
                              # fonction non adaptée
-                             link = "377267820"
-                           } else if (!"Pla" %in% varUsed){ # Pas placette
+                             link = "377267625"
+                           } else if ("Co" %in% informations$funUsed){ # comptage
+                             # fonction non adaptée
+                             link = "377267747"
+                           } else if (!"Pla" %in% informations$varUsed){ # Pas placette
                              # video à faire manque la carte placette
                              link = "1143628"
-                           } else if (!"Num" %in% varUsed){ # Pas numéro d'observation
+                           } else if (!"Num" %in% informations$varUsed){ # Pas numéro d'observation
                              # video à faire manque la carte placette
                              link = "1143628"
-                           } else if (!"G" %in% toolUsed){ # No graph
+                           } else if (!"G" %in% informations$toolUsed){ # No graph
                              # Manque de graph nécessaire : vidéo à refaire
                              link = "1143628"
-                           } else if (!"B" %in% toolUsed){ # No error bars
+                           } else if (!"B" %in% informations$toolUsed){ # No error bars
                              link = "1143628"
                            } else if ("TOUT BONNN"){ # good graph
                              link = "377267723"

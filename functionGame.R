@@ -181,3 +181,23 @@ uniteTags <- function(tags.list){
   return(tagString)
 }
 
+
+#' @title codeInformation
+#' 
+#' @description parse the input code and gives information on the tools,
+#' the variables and the function used
+#' @param fullCode a string containing the input code from the user
+codeInformation <- function (fullCode){
+  AllTools <- unlist(strsplit(fullCode, ":"))
+  AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
+  toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
+  # variables utilisées
+  varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
+  # fonctions utilisées
+  funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
+  funUsed <- str_sub(funUsed, start = 1, end = 2)
+  
+  informations <- list(toolUsed, varUsed, funUsed)
+  names(informations) <- c("toolUsed", "varUsed", "funUsed")
+  informations
+}

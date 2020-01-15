@@ -18,18 +18,25 @@ source('RenderCards.R')
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   # Application title
-  titlePanel("Datathon"),
+  #titlePanel("Datathon"),
+  
   
   # Sidebar with inputs
   sidebarLayout(
     sidebarPanel(
+      # Logo de l'application
+      tags$img(src = "LOGO_ordonne.png", width = '100%'),
+      HTML("<br><br>"),
+      
+      
       textInput("code", "Entrez votre code :", value = ""),
       submitButton(text = "Validez le code", icon = NULL, width = NULL)
     ),
     
     # Show the outputs from the treatment
     mainPanel(
-      uiOutput("Cards")
+      uiOutput("Cards"),
+      tableOutput("Debug")
     )
   )
 )
@@ -104,7 +111,7 @@ server <- function(input, output) {
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
           Results[[i]] <- Results[[i-1]] %>%
-            arrange(Parameters[[2]])
+            arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
         } else if (substring(tools[i], 1, 1) == "G"){
           # get parameters (improve by locating the graph within the code)
           Parameters <- separateParametersTreatment(tools[i])
@@ -119,7 +126,10 @@ server <- function(input, output) {
           Results[[i]] <- ggplot(Results[[i-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
             representation +
             facet +
-            theme_minimal()
+            theme_minimal()+
+            theme(axis.text=element_text(size=12),
+                  axis.title=element_text(size=16),
+                  strip.text.x = element_text(size = 14))
         } else if (substring(tools[i], 1, 1) == "B"){
           Parameters <- separateParametersTreatment(tools[i-1])
           Results[[i-1]]$data <- Results[[i-1]]$data %>%
@@ -160,6 +170,33 @@ server <- function(input, output) {
     else
       # no display
       NULL
+  })
+  output$Debug <- renderTable({
+    Debug <- vector(mode = "list", length = 1)
+    # Découpage du code
+    # noms des outils
+    AllTools <- unlist(strsplit(input$code, ":"))
+    AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
+    toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
+    # variables utilisées
+    varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
+    # fonctions utilisées
+    funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
+    funUsed <- str_sub(funUsed, start = 1, end = 2)
+    # function utilisées
+    Debug[[1]] <- c(!"D" %in% toolUsed, '!"D" %in% toolUsed', 'Pas de données')
+    Debug[[2]] <- c(length(toolUsed) == 1, 'length(toolUsed) == 1', 'Seulement les données')
+    Debug[[3]] <- c("M" %in% toolUsed, '"M" %in% toolUsed', 'utilisation de random all (non souhaité)')
+    Debug[[4]] <- c("P" %in% toolUsed, '"P" %in% toolUsed', 'Utilisation dune carte (non souhaité)')
+    Debug[[5]] <- c(!"Env" %in% varUsed, '!"Env" %in% varUsed', 'anque Environnement dans les variables')
+    Debug[[6]] <- c(!"R" %in% toolUsed, '!"R" %in% toolUsed', 'Pas de regroupement')
+    Debug[[7]] <- c("So" %in% funUsed & !"Mo" %in% funUsed, '"So" %in% funUsed & !"Mo" %in% funUsed', 'Pas de données')
+    Debug[[8]] <- c("Co" %in% funUsed, '"Co" %in% funUsed', 'Utilisation dun comptage (non souhaité)')
+    Debug[[9]] <- c(!"Pla" %in% varUsed, '!"Pla" %in% varUsed', 'Manque placette dans les variables')
+    Debug[[10]] <- c(!"Num" %in% varUsed, '!"Num" %in% varUsed', 'Manque numéro dobservation  dans les variables')
+    Debug[[11]] <- c(!"G" %in% toolUsed, '!"G" %in% toolUsed', 'Pas de graphique')
+    Debug[[12]] <- c(!"B" %in% toolUsed, '!"B" %in% toolUsed', 'Pas de barres derreur')
+    matrix(unlist(Debug), ncol = 3, byrow = TRUE)
   })
   
   # Procedurally generate server by calling multiple times renderCards module's server
