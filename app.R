@@ -11,6 +11,7 @@
 library(shiny)
 library(memisc) # to view iframe
 library(shinyBS)
+library(DT)
 # load the functions to run the game
 source('functionGame.R')
 source('RenderCards.R')
@@ -36,7 +37,7 @@ ui <- fluidPage(
     # Show the outputs from the treatment
     mainPanel(
       uiOutput("Cards"),
-      tableOutput("Debug"),
+      #tableOutput("Debug"),
       textOutput("Error")
     )
   )
