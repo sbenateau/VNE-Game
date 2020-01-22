@@ -82,6 +82,7 @@ server <- function(input, output) {
       
       # Get the data
       Data <- Data()
+      #Data <- data.frame(getDataInitial())
       # TODO allow different possibilities
       
       #separate code to get clear instructions
@@ -135,8 +136,8 @@ server <- function(input, output) {
         } else if (substring(tools[i], 1, 1) == "B"){
           Parameters <- separateParametersTreatment(tools[i-1])
           Results[[i-1]]$data <- Results[[i-1]]$data %>%
-            mutate(ymin = Nombre_individus + se,
-                   ymax = Nombre_individus - se)
+            mutate(ymin = Nombre_individus + 1.96 * se,
+                   ymax = Nombre_individus - 1.96 * se)
           Results[[i]] <- Results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2)
         } else if (substring(tools[i], 1, 1) == "P"){
           Parameters <- separateParametersTreatment(tools[i])
@@ -155,8 +156,11 @@ server <- function(input, output) {
         }
         # TODO in case of typo, any default value?
       }
+      # Remove se column for display (only used to add error bars)
+      Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
       Results
     }
+
   })
   
   # Procedurally generate UI by calling multiple times the renderCards module

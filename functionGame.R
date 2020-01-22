@@ -50,7 +50,7 @@ getDataInitial <- function(directory = "data/"){
   jeuDeDonnees$Placette <- Placette
   # Reduce columns nomber and add juveniles and adults
   jeuDeDonneesReduction <- jeuDeDonnees %>%
-    rename(Numero_observation = numero_observation, 
+    dplyr::rename(Numero_observation = numero_observation, 
            Code_postal = code_postal_etablissement,
            Longitude = longitude,
            Latitude = latitude,
