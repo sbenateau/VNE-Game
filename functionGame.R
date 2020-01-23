@@ -14,26 +14,38 @@ EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 
 
 # Function for operation ----
+#' @title mean2
+#' 
 mean2 <- function(x) {
   mean(x, na.rm = TRUE)
 }
 
+#' @title sd2
+#' 
 sd2 <- function(x) {
   sd(x, na.rm = TRUE)
 }
 
+#' @title sum2
+#' 
 sum2 <- function(x) {
   sum(x, na.rm = TRUE)
 }
 
+#' @title median2
+#' 
 median2 <- function(x) {
   median(x, na.rm = TRUE)
 }
 
+#' @title lengthSupZero
+#' 
 lengthSupZero <- function(x) {
   length(x[x>0])
 }
 
+#' @title se
+#' 
 se <- function(x){
   x2 <- na.omit(x)
   sd(x2)/sqrt(length(x2))
@@ -43,22 +55,22 @@ se <- function(x){
 # import data for  the game
 getDataInitial <- function(directory = "data/"){
   # Upload complete data Earth Worm
-  jeuDeDonnees <- fread(paste0(directory,"VersDeTerre.csv"))
+  jeuDeDonnees <- data.table::fread(paste0(directory,"VersDeTerre.csv"))
   
   # add placette (to keep the number of row)
   Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
   jeuDeDonnees$Placette <- Placette
   # Reduce columns nomber and add juveniles and adults
   jeuDeDonneesReduction <- jeuDeDonnees %>%
-    dplyr::rename(Numero_observation = numero_observation, 
-           Code_postal = code_postal_etablissement,
-           Longitude = longitude,
-           Latitude = latitude,
-           Nombre_individus = nb_ind,
-           Humidite_sol = humidite_sol,
-           Environnement = environnement,
-           Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
-           Temperature = temperature_durant_obs) %>%
+    dplyr::rename(Numero_observation = numero_observation,
+                  Code_postal = code_postal_etablissement,
+                  Longitude = longitude,
+                  Latitude = latitude,
+                  Nombre_individus = nb_ind,
+                  Humidite_sol = humidite_sol,
+                  Environnement = environnement,
+                  Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
+                  Temperature = temperature_durant_obs) %>%
     mutate(Espece = str_remove_all(sp, fixed(" (juvénile)")))  %>%
     mutate(Espece = str_remove_all(Espece, fixed("s"))) %>%
     mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
@@ -74,8 +86,8 @@ getDataInitial <- function(directory = "data/"){
              Longitude,
              Latitude) %>%
     summarise(Nombre_individus = sum2(Nombre_individus))
-
-
+  
+  
   # reorder columns
   colnamesDf <- colnames(jeuDeDonneesReduction) 
   jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
@@ -113,6 +125,8 @@ separateTools <- function (code, sep = ":"){
   }
 }
 
+#' @title separateParametersTreatment
+#' 
 # get the 'arguments' of each tool
 separateParametersTreatment <- function (code){
   #remove tool id
@@ -174,7 +188,7 @@ uniteTags <- function(tags.list){
   tagString <- ""
   sapply(tags.list, function(tag){
     tagString <<- HTML(as.character(tagString),
-                      as.character(tag))
+                       as.character(tag))
   })
   # browser()
   tagString <- tagList(tagString)

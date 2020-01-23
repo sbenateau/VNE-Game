@@ -11,7 +11,7 @@
 library(shiny)
 library(memisc) # to view iframe
 library(shinyBS)
-library(DT)
+#library(DT)
 # load the functions to run the game
 source('functionGame.R')
 source('RenderCards.R')
@@ -62,10 +62,10 @@ server <- function(input, output) {
       download.file(githubURL, file.path(extraWD, "departement.zip"))
       unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
     }
-    departements_L93 <- st_read(dsn = extraWD, layer = "DEPARTEMENT",
+    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
                                 quiet = TRUE) %>% 
-      rename(Departement = CODE_DEPT) %>%
-      st_transform(2154)
+      dplyr::rename(Departement = CODE_DEPT) %>%
+      sf::st_transform(2154)
     departements_L93
   })
   
@@ -105,7 +105,7 @@ server <- function(input, output) {
             Results[[i]] <- Results[[i-1]] %>%
               group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
               summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
-              rename(Nombre_individus = mean)
+              dplyr::rename(Nombre_individus = mean)
           } else {
             Results[[i]] <- Results[[i-1]] %>%
               group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
@@ -157,7 +157,9 @@ server <- function(input, output) {
         # TODO in case of typo, any default value?
       }
       # Remove se column for display (only used to add error bars)
+      if (any(stringr::str_detect(tools,"Mo"))){
       Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
+      }
       Results
     }
 
