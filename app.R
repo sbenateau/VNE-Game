@@ -103,18 +103,18 @@ server <- function(input, output) {
           Parameters <- separateParametersTreatment(tools[i])
           if (Parameters[[3]] == "Mo"){
             Results[[i]] <- Results[[i-1]] %>%
-              group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
+              dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
               dplyr::rename(Nombre_individus = mean)
           } else {
             Results[[i]] <- Results[[i-1]] %>%
-              group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+              dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
           }
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
           Results[[i]] <- Results[[i-1]] %>%
-            arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
+            dplyr::arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
         } else if (substring(tools[i], 1, 1) == "G"){
           # get parameters (improve by locating the graph within the code)
           Parameters <- separateParametersTreatment(tools[i])
@@ -122,32 +122,32 @@ server <- function(input, output) {
           colNamesData <- colnames(Results[[i-1]])
           # Add errors if the columns are not in the code
           # if sp is in the dataset, separate by  species (if species as columns then change)
-          if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = facet_wrap(.~Espece) else facet = NULL
+          if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
           # if data not summarised plot points else plot barplot
-          if (nrow(Results[[i-1]]) < 30) representation <- geom_col(aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+          if (nrow(Results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
           # graph is too specific right now
-          Results[[i]] <- ggplot(Results[[i-1]], aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+          Results[[i]] <- ggplot2::ggplot(Results[[i-1]], ggplot2::aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
             representation +
             facet +
-            theme_minimal()+
-            theme(axis.text=element_text(size=12),
+            ggplot2::theme_minimal()+
+            ggplot2::theme(axis.text=element_text(size=12),
                   axis.title=element_text(size=16),
                   strip.text.x = element_text(size = 14))
         } else if (substring(tools[i], 1, 1) == "B"){
           Parameters <- separateParametersTreatment(tools[i-1])
           Results[[i-1]]$data <- Results[[i-1]]$data %>%
-            mutate(ymin = Nombre_individus + 1.96 * se,
+            dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
                    ymax = Nombre_individus - 1.96 * se)
           Results[[i]] <- Results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2)
         } else if (substring(tools[i], 1, 1) == "P"){
           Parameters <- separateParametersTreatment(tools[i])
           departements_L93 <- mapToPlot()
-          geoData = left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
-            st_transform(2154)
+          geoData = dplyr::left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
+            sf::st_transform(2154)
           
-          Results[[i]] <- tm_shape(geoData) +
-            tm_borders() +
-            tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+          Results[[i]] <- tmap::tm_shape(geoData) +
+            tmap::tm_borders() +
+            tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
           
         }
         else{

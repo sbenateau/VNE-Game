@@ -71,10 +71,10 @@ getDataInitial <- function(directory = "data/"){
                   Environnement = environnement,
                   Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
                   Temperature = temperature_durant_obs) %>%
-    mutate(Espece = str_remove_all(sp, fixed(" (juvénile)")))  %>%
-    mutate(Espece = str_remove_all(Espece, fixed("s"))) %>%
-    mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
-    group_by(Numero_observation,
+    dplyr::mutate(Espece = stringr::str_remove_all(sp, fixed(" (juvénile)")))  %>%
+    dplyr::mutate(Espece = stringr::str_remove_all(Espece, fixed("s"))) %>%
+    dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
+    dplyr::group_by(Numero_observation,
              Placette,
              Espece,
              Environnement,
@@ -85,7 +85,7 @@ getDataInitial <- function(directory = "data/"){
              Departement,
              Longitude,
              Latitude) %>%
-    summarise(Nombre_individus = sum2(Nombre_individus))
+    dplyr::summarise(Nombre_individus = sum2(Nombre_individus))
   
   
   # reorder columns
@@ -149,7 +149,7 @@ separateParametersTreatment <- function (code){
 #' @param df An input data.frame
 randomAll <- function(df) {
   df2 <- df %>%
-    mutate_all(as.character)
+    dplyr::mutate_all(as.character)
   for (i in 1:nrow(df)){
     for (j in 1:ncol(df)){
       df2[i,j] <- df[sample(nrow(df), size = 1), sample(ncol(df), size = 1)]
@@ -168,7 +168,7 @@ randomAll <- function(df) {
 correspond <- function (input, reference){
   inputDf <-  data.frame(input)
   colnames(inputDf) <- "input"
-  inputColumns <- inner_join(inputDf, reference, by="input")
+  inputColumns <- dplyr::inner_join(inputDf, reference, by="input")
   as.character(inputColumns$translation)
 }
 
@@ -206,9 +206,9 @@ codeInformation <- function (fullCode){
   AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
   toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
   # variables utilisées
-  varUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
+  varUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
   # fonctions utilisées
-  funUsed <-unlist(str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
+  funUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
   funUsed <- str_sub(funUsed, start = 1, end = 2)
   
   informations <- list(toolUsed, varUsed, funUsed)

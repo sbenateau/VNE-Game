@@ -34,6 +34,7 @@ renderCardsUI <- function(id, parsedCode) {
                P = plotOutput(ns(id)),
                S = uiOutput(ns(id)),
                D = DT::dataTableOutput(ns(id)),
+               R = DT::dataTableOutput(ns(id)),
                tableOutput(ns(id))
         )
       )
@@ -55,6 +56,7 @@ renderCards <- function(input, output, session,
                          P = renderPlot(Results),
                          B = renderPlot(Results),
                          D = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         R = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
                          S = renderUI({
                            # Découpage du code
                            informations <- codeInformation(fullCode)
