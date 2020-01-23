@@ -63,7 +63,7 @@ server <- function(input, output) {
       unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
     }
     departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                quiet = TRUE) %>% 
+                                    quiet = TRUE) %>% 
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
     departements_L93
@@ -131,23 +131,25 @@ server <- function(input, output) {
             facet +
             ggplot2::theme_minimal()+
             ggplot2::theme(axis.text=element_text(size=12),
-                  axis.title=element_text(size=16),
-                  strip.text.x = element_text(size = 14))
+                           axis.title=element_text(size=16),
+                           strip.text.x = element_text(size = 14))
         } else if (substring(tools[i], 1, 1) == "B"){
           Parameters <- separateParametersTreatment(tools[i-1])
           Results[[i-1]]$data <- Results[[i-1]]$data %>%
             dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
-                   ymax = Nombre_individus - 1.96 * se)
+                          ymax = Nombre_individus - 1.96 * se)
           Results[[i]] <- Results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2)
         } else if (substring(tools[i], 1, 1) == "P"){
           Parameters <- separateParametersTreatment(tools[i])
-          departements_L93 <- mapToPlot()
-          geoData = dplyr::left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
-            sf::st_transform(2154)
-          
-          Results[[i]] <- tmap::tm_shape(geoData) +
-            tmap::tm_borders() +
-            tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+          if (!Parameters[[2]] == "Dep"){
+            departements_L93 <- mapToPlot()
+            geoData = dplyr::left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
+              sf::st_transform(2154)
+            
+            Results[[i]] <- tmap::tm_shape(geoData) +
+              tmap::tm_borders() +
+              tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+          }
           
         }
         else{
@@ -158,11 +160,11 @@ server <- function(input, output) {
       }
       # Remove se column for display (only used to add error bars)
       if (any(stringr::str_detect(tools,"Mo"))){
-      Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
+        Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
       }
       Results
     }
-
+    
   })
   
   # Procedurally generate UI by calling multiple times the renderCards module
