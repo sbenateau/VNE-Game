@@ -129,6 +129,29 @@ getDataInitial <- function(directory = "data/", observatory){
       dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2)))
     jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
     jeuDeDonneesReduction
+  } else if (observatory == "Esc"){
+    jeuDeDonnees <- data.table::fread(paste0(directory,"Escargot.csv"))
+    jeuDeDonneesReduction <- jeuDeDonnees %>%
+      dplyr::select(Numero_observation = numero_observation,
+                    Numero_planche = num_Planche,
+                    Espece = sp,
+                    Nombre_individus = nb_ind,
+                    Date=date_obs,
+                    Code_postal = code_postal_etablissement,
+                    Environnement = environnement,
+                    #Longitude = longitude,
+                    #Latitude = latitude,
+                    #Humidite_sol = humidite_sol,
+                    Surface_zone = Surface,
+                    Distance_bois = distance_bois,
+                    Distance_prarie = distance_prairie,
+                    Distance_champs = distance_champ
+                    #Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
+                    #Temperature = temperature_durant_obs
+      )%>%
+      dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2)))
+    jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
+    jeuDeDonneesReduction
   }
 }
 
