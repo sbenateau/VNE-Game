@@ -53,57 +53,83 @@ se <- function(x){
 
 
 # import data for  the game
-getDataInitial <- function(directory = "data/"){
-  # Upload complete data Earth Worm
-  jeuDeDonnees <- data.table::fread(paste0(directory,"VersDeTerre.csv"))
-  
-  # add placette (to keep the number of row)
-  Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
-  jeuDeDonnees$Placette <- Placette
-  # Reduce columns nomber and add juveniles and adults
-  jeuDeDonneesReduction <- jeuDeDonnees %>%
-    dplyr::rename(Numero_observation = numero_observation,
-                  Code_postal = code_postal_etablissement,
-                  Longitude = longitude,
-                  Latitude = latitude,
-                  Nombre_individus = nb_ind,
-                  Humidite_sol = humidite_sol,
-                  Environnement = environnement,
-                  Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
-                  Temperature = temperature_durant_obs) %>%
-    dplyr::mutate(Espece = stringr::str_remove_all(sp, fixed(" (juvénile)")))  %>%
-    dplyr::mutate(Espece = stringr::str_remove_all(Espece, fixed("s"))) %>%
-    dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
-    dplyr::group_by(Numero_observation,
-             Placette,
-             Espece,
-             Environnement,
-             Humidite_sol,
-             Difficulte_enfoncer_crayon,
-             Temperature,
-             Code_postal,
-             Departement,
-             Longitude,
-             Latitude) %>%
-    dplyr::summarise(Nombre_individus = sum2(Nombre_individus))
-  
-  
-  # reorder columns
-  colnamesDf <- colnames(jeuDeDonneesReduction) 
-  jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
-  
-  #Remplacer NA par 0
-  jeuDeDonneesReduction[is.na(jeuDeDonneesReduction[ , "Nombre_individus"]) , "Nombre_individus"] <- 0
-  
-  # pour l'ordre dans les futurs graphiques
-  #Turn your 'treatment' column into a character vector
-  #Then turn it back into a factor with the levels in the correct order
-  jeuDeDonneesReduction$Environnement <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
-  jeuDeDonneesReduction$Humidite_sol <- factor(as.character(jeuDeDonneesReduction$Humidite_sol), levels=c("engorge", "humide", "sec", ""))
-  levels(jeuDeDonneesReduction$Humidite_sol)[4] <- "Donnees_manquantes"
-  jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("tres_facile", "facile", "peu_difficile", "difficile", ""))
-  levels(jeuDeDonneesReduction$Difficulte_enfoncer_crayon)[5] <- "Donnees_manquantes"
-  return(jeuDeDonneesReduction)
+getDataInitial <- function(directory = "data/", observatory){
+  if (observatory == "Vdt"){
+    # Upload complete data Earth Worm
+    jeuDeDonnees <- data.table::fread(paste0(directory,"VersDeTerre.csv"))
+    
+    # add placette (to keep the number of row)
+    Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
+    jeuDeDonnees$Placette <- Placette
+    # Reduce columns nomber and add juveniles and adults
+    jeuDeDonneesReduction <- jeuDeDonnees %>%
+      dplyr::rename(Numero_observation = numero_observation,
+                    Code_postal = code_postal_etablissement,
+                    Longitude = longitude,
+                    Latitude = latitude,
+                    Nombre_individus = nb_ind,
+                    Humidite_sol = humidite_sol,
+                    Environnement = environnement,
+                    Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
+                    Temperature = temperature_durant_obs) %>%
+      dplyr::mutate(Espece = stringr::str_remove_all(sp, fixed(" (juvénile)")))  %>%
+      dplyr::mutate(Espece = stringr::str_remove_all(Espece, fixed("s"))) %>%
+      dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2))) %>%
+      dplyr::group_by(Numero_observation,
+                      Placette,
+                      Espece,
+                      Environnement,
+                      Humidite_sol,
+                      Difficulte_enfoncer_crayon,
+                      Temperature,
+                      Code_postal,
+                      Departement,
+                      Longitude,
+                      Latitude) %>%
+      dplyr::summarise(Nombre_individus = sum2(Nombre_individus))
+    
+    
+    # reorder columns
+    colnamesDf <- colnames(jeuDeDonneesReduction) 
+    jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
+    
+    #Remplacer NA par 0
+    jeuDeDonneesReduction[is.na(jeuDeDonneesReduction[ , "Nombre_individus"]) , "Nombre_individus"] <- 0
+    
+    # pour l'ordre dans les futurs graphiques
+    #Turn your 'treatment' column into a character vector
+    #Then turn it back into a factor with the levels in the correct order
+    jeuDeDonneesReduction$Environnement <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
+    jeuDeDonneesReduction$Humidite_sol <- factor(as.character(jeuDeDonneesReduction$Humidite_sol), levels=c("engorge", "humide", "sec", ""))
+    levels(jeuDeDonneesReduction$Humidite_sol)[4] <- "Donnees_manquantes"
+    jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("tres_facile", "facile", "peu_difficile", "difficile", ""))
+    levels(jeuDeDonneesReduction$Difficulte_enfoncer_crayon)[5] <- "Donnees_manquantes"
+    return(jeuDeDonneesReduction)
+  }
+  else if (observatory == "Ois") {
+    # Upload complete data Earth Worm
+    jeuDeDonnees <- data.table::fread(paste0(directory,"Oiseaux2.csv"))
+    jeuDeDonneesReduction <- jeuDeDonnees %>%
+      dplyr::select(Numero_observation = numero_observation,
+                    Espece = sp,
+                    Nombre_individus = nb_ind,
+                    Date=date_obs,
+                    Code_postal = code_postal_etablissement,
+                    Environnement = environnement,
+                    #Longitude = longitude,
+                    #Latitude = latitude,
+                    #Humidite_sol = humidite_sol,
+                    Surface_zone = surface_zone,
+                    Distance_bois = distance_bois,
+                    Distance_prarie = distance_prairie,
+                    Distance_champs = distance_champ
+                    #Difficulte_enfoncer_crayon = difficulte_enfoncer_crayon,
+                    #Temperature = temperature_durant_obs
+      )%>%
+      dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2)))
+    jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
+    jeuDeDonneesReduction
+  }
 }
 
 # functions for the game ----

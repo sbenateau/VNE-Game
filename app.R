@@ -48,12 +48,7 @@ server <- function(input, output) {
   
   # Variable initialization
   rv <- reactiveValues()
-  
-  #Import data
-  Data <- reactive({
-    data.frame(getDataInitial())
-  })
-  
+
   #Import map
   mapToPlot <- reactive({
     extraWD = "data"
@@ -81,7 +76,7 @@ server <- function(input, output) {
     if (code != "" ){
       
       # Get the data
-      Data <- Data()
+     
       #Data <- data.frame(getDataInitial())
       # TODO allow different possibilities
       
@@ -96,7 +91,8 @@ server <- function(input, output) {
       for (i in 1:length(tools)){
         # case tool = data
         if (substring(tools[i], 1, 1) ==  "D"){
-          Results[[i]] <- Data
+          Parameters <- separateParametersTreatment(tools[i])
+          Results[[i]] <- data.frame(getDataInitial(observatory = Parameters[2]))
         } else if (tools[i] == "M") {
           Results[[i]] = randomAll(Results[[i-1]])
         } else if (substring(tools[i], 1, 1) == "R"){
