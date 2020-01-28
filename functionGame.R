@@ -130,8 +130,12 @@ getDataInitial <- function(directory = "data/", observatory){
     jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
     jeuDeDonneesReduction$Environnement   <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
     jeuDeDonneesReduction$Distance_bois   <- factor(as.character(jeuDeDonneesReduction$Distance_bois), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_bois[jeuDeDonneesReduction$Distance_bois ==""] <- "Non renseigné"
     jeuDeDonneesReduction$Distance_prarie <- factor(as.character(jeuDeDonneesReduction$Distance_prarie), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_prarie[jeuDeDonneesReduction$Distance_prarie ==""] <- "Non renseigné"
     jeuDeDonneesReduction$Distance_champs <- factor(as.character(jeuDeDonneesReduction$Distance_champs), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_champs[jeuDeDonneesReduction$Distance_champs ==""] <- "Non renseigné"
+    levels(jeuDeDonneesReduction$Departement)[levels(jeuDeDonneesReduction$Departement) =="  "] <- "Non renseigné"
     jeuDeDonneesReduction
   }
 }
