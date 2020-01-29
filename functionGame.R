@@ -107,7 +107,7 @@ getDataInitial <- function(directory = "data/", observatory){
     return(jeuDeDonneesReduction)
   }
   else if (observatory == "Ois") {
-    # Upload complete data Earth Worm
+    # Upload complete data for  birds
     jeuDeDonnees <- data.table::fread(paste0(directory,"Oiseaux2.csv"))
     jeuDeDonneesReduction <- jeuDeDonnees %>%
       dplyr::select(Numero_observation = numero_observation,
@@ -128,6 +128,14 @@ getDataInitial <- function(directory = "data/", observatory){
       )%>%
       dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2)))
     jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
+    jeuDeDonneesReduction$Environnement   <- factor(as.character(jeuDeDonneesReduction$Environnement), levels=c("Rural", "Péri-urbain", "Urbain"))
+    jeuDeDonneesReduction$Distance_bois   <- factor(as.character(jeuDeDonneesReduction$Distance_bois), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_bois[jeuDeDonneesReduction$Distance_bois ==""] <- "Non renseigné"
+    jeuDeDonneesReduction$Distance_prarie <- factor(as.character(jeuDeDonneesReduction$Distance_prarie), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_prarie[jeuDeDonneesReduction$Distance_prarie ==""] <- "Non renseigné"
+    jeuDeDonneesReduction$Distance_champs <- factor(as.character(jeuDeDonneesReduction$Distance_champs), levels=c("moins de 50 m", "50 à 500 m", "501 à 1000 m", "1001 m à 2000 m", "au-delà de 2 km", "Non renseigné", ""))
+    jeuDeDonneesReduction$Distance_champs[jeuDeDonneesReduction$Distance_champs ==""] <- "Non renseigné"
+    levels(jeuDeDonneesReduction$Departement)[levels(jeuDeDonneesReduction$Departement) =="  "] <- "Non renseigné"
     jeuDeDonneesReduction
   } else if (observatory == "Esc"){
     jeuDeDonnees <- data.table::fread(paste0(directory,"Escargot.csv"))
