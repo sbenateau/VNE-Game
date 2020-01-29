@@ -7,6 +7,7 @@ library(tidyr)
 library(sf)
 library(tmap)
 library(rlang)
+library(purrr)
 
 # load correspondance between code and variables and functions
 EquivalenceVar <- read.csv("data/EquivalenceVar.csv", sep = ",", row.names = 1)
@@ -37,6 +38,13 @@ sum2 <- function(x) {
 median2 <- function(x) {
   median(x, na.rm = TRUE)
 }
+
+p <- c(0.25, 0.5, 0.75)
+p_names <- map_chr(p, ~paste0(.x*100, "%"))
+p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+  set_names(nm = p_names)
+
+
 
 #' @title lengthSupZero
 #' 
