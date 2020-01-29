@@ -100,12 +100,14 @@ server <- function(input, output) {
           if (Parameters[[3]] == "Mo"){
             Results[[i]] <- Results[[i-1]] %>%
               dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
-              dplyr::rename(Nombre_individus = mean)
-          } else {
+              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se"))
+            colnames(Results[[i]])[which(colnames(Results[[i]]) == "mean")]  <- correspond(Parameters[[2]], EquivalenceVar)
+          } else if (Parameters[[3]] == "Me"){
+            #https://tbradley1013.github.io/2018/10/01/calculating-quantiles-for-groups-with-dplyr-summarize-and-purrr-partial/
             Results[[i]] <- Results[[i-1]] %>%
               dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = "quantile")
+            colnames(Results[[i]])[which(colnames(Results[[i]]) == "50%")]  <- correspond(Parameters[[2]], EquivalenceVar)
           }
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
@@ -157,6 +159,9 @@ server <- function(input, output) {
       # Remove se column for display (only used to add error bars)
       if (any(stringr::str_detect(tools,"Mo"))){
         Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
+      }
+      if (any(stringr::str_detect(tools,"Me"))){
+        Results[[which(str_detect(tools, "Me"))]] <- Results[[which(str_detect(tools, "Me"))]][-which(names(Results[[which(str_detect(tools, "Me"))]]) == "0%" | names(Results[[which(str_detect(tools, "Me"))]]) == "25%")]
       }
       Results
     }
