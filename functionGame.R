@@ -101,9 +101,6 @@ getDataInitial <- function(directory = "data/", observatory){
     colnamesDf <- colnames(jeuDeDonneesReduction) 
     jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
     
-    #Remplacer NA par 0
-    jeuDeDonneesReduction[is.na(jeuDeDonneesReduction[ , "Nombre_individus"]) , "Nombre_individus"] <- 0
-    
     # pour l'ordre dans les futurs graphiques
     #Turn your 'treatment' column into a character vector
     #Then turn it back into a factor with the levels in the correct order
@@ -279,4 +276,66 @@ codeInformation <- function (fullCode){
   informations <- list(toolUsed, varUsed, funUsed)
   names(informations) <- c("toolUsed", "varUsed", "funUsed")
   informations
+}
+
+#' @title makeGraph
+#' 
+#' @description make graph from the result of the previous tool
+#' @param results the results from the previous tools
+#' @param tools is the list of the tools used
+#' @param i the number of the step
+makeGraph <- function(tools, results, i) {
+  # get parameters (improve by locating the graph within the code)
+  Parameters <- separateParametersTreatment(tools[i])
+  # get the name of the column to check few thing
+  colNamesData <- colnames(results[[i-1]])
+  # Add errors if the columns are not in the code
+  # if sp is in the dataset, separate by species (if species as columns then change)
+  #TODO Add 
+  #if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
+  # if data not summarised plot points else plot barplot
+  if (nrow(results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+  # graph is too specific right now
+  ggplot2::ggplot(results[[i-1]], ggplot2::aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+    representation +
+    #facet +
+    ggplot2::theme_minimal()+
+    ggplot2::theme(axis.text=element_text(size=12),
+                   axis.title=element_text(size=16),
+                   strip.text.x = element_text(size = 14))
+}
+
+#' @title makeSummary
+#' 
+#' @description make graph from the result of the previous tool
+#' @param results the results from the previous tools
+#' @param i the number of the step
+makeSummary <- function (tools, results, i) {
+  Parameters <- separateParametersTreatment(tools[i])
+  # calculate se for error bars later
+  if (Parameters[[3]] == "Mo"){
+    res <- results[[i-1]] %>%
+      dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se"))
+    # rename with the right name
+    colnames(res)[which(colnames(res) == "mean")] <- correspond(Parameters[[2]], EquivalenceVar)
+  } else {
+    res <- results[[i-1]] %>%
+      dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
+      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
+  }
+  return(res)
+}
+
+#' @title makeErrorBars
+#' 
+#' @description add ErrorBars to a graph 
+#' @param results the results from the previous tools
+#' @param i the number of the step
+makeErrorBars <- function(tools, results, i){
+Parameters <- separateParametersTreatment(tools[i-1])
+results[[i-1]]$data <- results[[i-1]]$data %>%
+  dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
+                ymax = Nombre_individus - 1.96 * se)
+return(results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2))
 }

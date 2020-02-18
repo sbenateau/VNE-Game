@@ -70,14 +70,14 @@ server <- function(input, output) {
   })
   
   # Reactive containing a list for each tool.
-  Results <- reactive({
+  results <- reactive({
     code <- input$code
     
     if (code != "" ){
       
       # Get the data
      
-      #Data <- data.frame(getDataInitial())
+      #Data <- data.frame(getDataInitial(observatory = "Ois"))
       # TODO allow different possibilities
       
       #separate code to get clear instructions
@@ -85,64 +85,34 @@ server <- function(input, output) {
       #tools <- unlist(strsplit(code, ":"))
       
       # create a list with size = nomber of tools
-      Results <- vector(mode = "list", length = length(tools))
+      results <- vector(mode = "list", length = length(tools))
       
       #loop to execute all the steps
       for (i in 1:length(tools)){
         # case tool = data
         if (substring(tools[i], 1, 1) ==  "D"){
           Parameters <- separateParametersTreatment(tools[i])
-          Results[[i]] <- data.frame(getDataInitial(observatory = Parameters[2]))
+          results[[i]] <- data.frame(getDataInitial(observatory = Parameters[2]))
         } else if (tools[i] == "M") {
-          Results[[i]] = randomAll(Results[[i-1]])
+          results[[i]] = randomAll(results[[i-1]])
         } else if (substring(tools[i], 1, 1) == "R"){
-          Parameters <- separateParametersTreatment(tools[i])
-          if (Parameters[[3]] == "Mo"){
-            Results[[i]] <- Results[[i-1]] %>%
-              dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se")) %>%
-              dplyr::rename(Nombre_individus = mean)
-          } else {
-            Results[[i]] <- Results[[i-1]] %>%
-              dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-              dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
-          }
+          results[[i]] <- makeSummary(tools, results, i) 
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
-          Results[[i]] <- Results[[i-1]] %>%
+          results[[i]] <- results[[i-1]] %>%
             dplyr::arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
         } else if (substring(tools[i], 1, 1) == "G"){
-          # get parameters (improve by locating the graph within the code)
-          Parameters <- separateParametersTreatment(tools[i])
-          # get the name of the column to check few thing
-          colNamesData <- colnames(Results[[i-1]])
-          # Add errors if the columns are not in the code
-          # if sp is in the dataset, separate by  species (if species as columns then change)
-          if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
-          # if data not summarised plot points else plot barplot
-          if (nrow(Results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
-          # graph is too specific right now
-          Results[[i]] <- ggplot2::ggplot(Results[[i-1]], ggplot2::aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
-            representation +
-            facet +
-            ggplot2::theme_minimal()+
-            ggplot2::theme(axis.text=element_text(size=12),
-                           axis.title=element_text(size=16),
-                           strip.text.x = element_text(size = 14))
+          results[[i]] <- makeGraph(tools, results, i)
         } else if (substring(tools[i], 1, 1) == "B"){
-          Parameters <- separateParametersTreatment(tools[i-1])
-          Results[[i-1]]$data <- Results[[i-1]]$data %>%
-            dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
-                          ymax = Nombre_individus - 1.96 * se)
-          Results[[i]] <- Results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2)
+          results[[i]] <- makeErrorBars(tools, results, i)
         } else if (substring(tools[i], 1, 1) == "P"){
           Parameters <- separateParametersTreatment(tools[i])
           if (!Parameters[[2]] == "Dep"){
             departements_L93 <- mapToPlot()
-            geoData = dplyr::left_join(departements_L93, Results[[i-1]], by = 'Departement') %>%
+            geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
               sf::st_transform(2154)
             
-            Results[[i]] <- tmap::tm_shape(geoData) +
+            results[[i]] <- tmap::tm_shape(geoData) +
               tmap::tm_borders() +
               tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
           }
@@ -156,9 +126,9 @@ server <- function(input, output) {
       }
       # Remove se column for display (only used to add error bars)
       if (any(stringr::str_detect(tools,"Mo"))){
-        Results[[which(str_detect(tools, "Mo"))]] <- Results[[which(str_detect(tools, "Mo"))]][-which(names(Results[[which(str_detect(tools, "Mo"))]]) == "se")]
+        results[[which(str_detect(tools, "Mo"))]] <- results[[which(str_detect(tools, "Mo"))]][-which(names(results[[which(str_detect(tools, "Mo"))]]) == "se")]
       }
-      Results
+      results
     }
     
   })
@@ -232,7 +202,7 @@ server <- function(input, output) {
       rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
                                                       toolPosition, # repeated to be given as additional argument
                                                       parsedCode(), 
-                                                      Results()[[toolPosition]], input$code)
+                                                      results()[[toolPosition]], input$code)
     })
   )
   
