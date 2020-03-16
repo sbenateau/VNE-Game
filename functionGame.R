@@ -10,31 +10,38 @@ library(rlang)
 library(purrr)
 
 # load correspondance between code and variables and functions
+# If you want to add functions or variable, you have to fill these documents
 EquivalenceVar <- read.csv("data/EquivalenceVar.csv", sep = ",", row.names = 1)
 EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 
 
 # Function for operation ----
+
+# Modification of the functions to handle NA values
 #' @title mean2
 #' 
+#' @param x a numeric vector 
 mean2 <- function(x) {
   mean(x, na.rm = TRUE)
 }
 
 #' @title sd2
 #' 
+#' @param x a numeric vector 
 sd2 <- function(x) {
   sd(x, na.rm = TRUE)
 }
 
 #' @title sum2
 #' 
+#' @param x a numeric vector 
 sum2 <- function(x) {
   sum(x, na.rm = TRUE)
 }
 
 #' @title median2
 #' 
+#' @param x a numeric vector 
 median2 <- function(x) {
   median(x, na.rm = TRUE)
 }
@@ -48,12 +55,14 @@ p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>%
 
 #' @title lengthSupZero
 #' 
+#' @param x a numeric vector 
 lengthSupZero <- function(x) {
   length(x[x>0])
 }
 
 #' @title se
 #' 
+#' @param x a numeric vector 
 se <- function(x){
   x2 <- na.omit(x)
   sd(x2)/sqrt(length(x2))
@@ -333,9 +342,40 @@ makeSummary <- function (tools, results, i) {
 #' @param results the results from the previous tools
 #' @param i the number of the step
 makeErrorBars <- function(tools, results, i){
-Parameters <- separateParametersTreatment(tools[i-1])
-results[[i-1]]$data <- results[[i-1]]$data %>%
-  dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
-                ymax = Nombre_individus - 1.96 * se)
-return(results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2))
+  Parameters <- separateParametersTreatment(tools[i-1])
+  results[[i-1]]$data <- results[[i-1]]$data %>%
+    dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
+                  ymax = Nombre_individus - 1.96 * se)
+  return(results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2))
+}
+
+
+# not functionning
+#' @title makeMap
+#' 
+#' @description make a map with the departements
+#' @param results the results from the previous tools
+#' @param i the number of the step
+makeMap <- function(tools, results, i){
+  Parameters <- separateParametersTreatment(tools[i])
+  if (!Parameters[[2]] == "Dep"){
+    extraWD = "data"
+    if (!file.exists(file.path(extraWD, "departement.zip"))) {
+      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
+      download.file(githubURL, file.path(extraWD, "departement.zip"))
+      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
+    }
+    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
+                                    quiet = TRUE) %>% 
+      dplyr::rename(Departement = CODE_DEPT) %>%
+      sf::st_transform(2154)
+    
+    departements_L93 <- mapToPlot()
+    geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
+      sf::st_transform(2154)
+    
+    tmap::tm_shape(geoData) +
+      tmap::tm_borders() +
+      tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+  }
 }
