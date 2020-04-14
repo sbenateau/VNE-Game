@@ -20,20 +20,23 @@ source('RenderCards.R')
 ui <- fluidPage(
   # Application title
   #titlePanel("Datathon"),
-  
-  
+
+
   # Sidebar with inputs
   sidebarLayout(
     sidebarPanel(
       # Logo de l'application
-      tags$img(src = "LOGO_ordonne.png", width = '100%'),
+      tags$img(src = "Logo_Paper.png", width = '100%'),
       HTML("<br><br>"),
-      
-      
+
+
       textInput("code", "Entrez votre code :", value = ""),
+      tags$head(
+        tags$style(HTML('#run{background-color:orange}'))
+      ),
       submitButton(text = "Validez le code", icon = NULL, width = NULL)
     ),
-    
+
     # Show the outputs from the treatment
     mainPanel(
       uiOutput("Cards"),
@@ -45,7 +48,7 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-  
+
   # Variable initialization
   rv <- reactiveValues()
 
@@ -58,35 +61,35 @@ server <- function(input, output) {
       unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
     }
     departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                    quiet = TRUE) %>% 
+                                    quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
     departements_L93
   })
-  
+
   # Breakdown code
   parsedCode <- reactive({
     unlist(strsplit(input$code, ":"))
   })
-  
+
   # Reactive containing a list for each tool.
   results <- reactive({
     code <- input$code
-    
+
     if (code != "" ){
-      
+
       # Get the data
-     
+
       #Data <- data.frame(getDataInitial(observatory = "Ois"))
       # TODO allow different possibilities
-      
+
       #separate code to get clear instructions
       tools <- parsedCode()
       #tools <- unlist(strsplit(code, ":"))
-      
+
       # create a list with size = nomber of tools
       results <- vector(mode = "list", length = length(tools))
-      
+
       #loop to execute all the steps
       for (i in 1:length(tools)){
         # case tool = data
@@ -96,7 +99,7 @@ server <- function(input, output) {
         } else if (tools[i] == "M") {
           results[[i]] = randomAll(results[[i-1]])
         } else if (substring(tools[i], 1, 1) == "R"){
-          results[[i]] <- makeSummary(tools, results, i) 
+          results[[i]] <- makeSummary(tools, results, i)
         } else if (substring(tools[i], 1, 1) == "T"){
           Parameters <- separateParametersTreatment(tools[i])
           results[[i]] <- results[[i-1]] %>%
@@ -111,12 +114,12 @@ server <- function(input, output) {
             departements_L93 <- mapToPlot()
             geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
               sf::st_transform(2154)
-            
+
             results[[i]] <- tmap::tm_shape(geoData) +
               tmap::tm_borders() +
               tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
           }
-          
+
         }
         else{
           msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ":"), ")\n")
@@ -130,9 +133,9 @@ server <- function(input, output) {
       }
       results
     }
-    
+
   })
-  
+
   # Procedurally generate UI by calling multiple times the renderCards module
   output$Cards <- renderUI({
     # Check for input's content
@@ -167,7 +170,7 @@ server <- function(input, output) {
     Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
     matrix(unlist(Debug), ncol = 3, byrow = TRUE)
   })
-  
+
   output$Error <- renderText({
     # Découpage du code
     fullCode <- input$code
@@ -195,19 +198,18 @@ server <- function(input, output) {
       paste(paste(message, collapse = ""), "Vérifiez votre code.")
     }
   })
-  
+
   # Procedurally generate server by calling multiple times renderCards module's server
   observe(
     sapply(seq_along(parsedCode()), function (toolPosition){
       rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
                                                       toolPosition, # repeated to be given as additional argument
-                                                      parsedCode(), 
+                                                      parsedCode(),
                                                       results()[[toolPosition]], input$code)
     })
   )
-  
+
 }
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
-
