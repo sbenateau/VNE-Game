@@ -19,50 +19,50 @@ EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 
 # Modification of the functions to handle NA values
 #' @title mean2
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 mean2 <- function(x) {
   round(mean(x, na.rm = TRUE), 1)
 }
 
 #' @title sd2
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 sd2 <- function(x) {
   sd(x, na.rm = TRUE)
 }
 
 #' @title sum2
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 sum2 <- function(x) {
   sum(x, na.rm = TRUE)
 }
 
 #' @title median2
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 median2 <- function(x) {
   median(x, na.rm = TRUE)
 }
 
 p <- c(0.25, 0.5, 0.75)
 p_names <- map_chr(p, ~paste0(.x*100, "%"))
-p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>%
   set_names(nm = p_names)
 
 
 
 #' @title lengthSupZero
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 lengthSupZero <- function(x) {
   length(x[x>0])
 }
 
 #' @title se
-#' 
-#' @param x a numeric vector 
+#'
+#' @param x a numeric vector
 se <- function(x){
   x2 <- na.omit(x)
   sd(x2)/sqrt(length(x2))
@@ -74,7 +74,7 @@ getDataInitial <- function(directory = "data/", observatory){
   if (observatory == "Vdt"){
     # Upload complete data Earth Worm
     jeuDeDonnees <- data.table::fread(paste0(directory,"VersDeTerre.csv"))
-    
+
     # add placette (to keep the number of row)
     Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
     jeuDeDonnees$Placette <- Placette
@@ -104,12 +104,12 @@ getDataInitial <- function(directory = "data/", observatory){
                       Longitude,
                       Latitude) %>%
       dplyr::summarise(Nombre_individus = sum2(Nombre_individus))
-    
-    
+
+
     # reorder columns
-    colnamesDf <- colnames(jeuDeDonneesReduction) 
+    colnamesDf <- colnames(jeuDeDonneesReduction)
     jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
-    
+
     # pour l'ordre dans les futurs graphiques
     #Turn your 'treatment' column into a character vector
     #Then turn it back into a factor with the levels in the correct order
@@ -197,7 +197,7 @@ separateTools <- function (code, sep = ":"){
 }
 
 #' @title separateParametersTreatment
-#' 
+#'
 # get the 'arguments' of each tool
 separateParametersTreatment <- function (code){
   #remove tool id
@@ -215,7 +215,7 @@ separateParametersTreatment <- function (code){
 }
 
 #' @title randomAll
-#' 
+#'
 #' @description randomize all columns of a data.frame
 #' @param df An input data.frame
 randomAll <- function(df) {
@@ -231,11 +231,11 @@ randomAll <- function(df) {
 
 
 #' @title correspond
-#' 
+#'
 #' @description translate codes to variables or function
 #' @param input A vector of the input code
 #' @param reference A data.frame table that contains the correspondance between the code and the variable or function
-#' 
+#'
 correspond <- function (input, reference){
   inputDf <-  data.frame(input)
   colnames(inputDf) <- "input"
@@ -252,7 +252,7 @@ printPlot <- function (x) {
 # Function for handling shiny tags ----
 
 #' @title uniteTags
-#' 
+#'
 #' @description takes a list of HTML tags (type: list; class: shiny.tags)
 #' and return a single shiny tag concatening all others
 uniteTags <- function(tags.list){
@@ -268,7 +268,7 @@ uniteTags <- function(tags.list){
 
 
 #' @title codeInformation
-#' 
+#'
 #' @description parse the input code and gives information on the tools,
 #' the variables and the function used
 #' @param fullCode a string containing the input code from the user
@@ -281,14 +281,14 @@ codeInformation <- function (fullCode){
   # fonctions utilisées
   funUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
   funUsed <- str_sub(funUsed, start = 1, end = 2)
-  
+
   informations <- list(toolUsed, varUsed, funUsed)
   names(informations) <- c("toolUsed", "varUsed", "funUsed")
   informations
 }
 
 #' @title makeGraph
-#' 
+#'
 #' @description make graph from the result of the previous tool
 #' @param results the results from the previous tools
 #' @param tools is the list of the tools used
@@ -300,7 +300,7 @@ makeGraph <- function(tools, results, i) {
   colNamesData <- colnames(results[[i-1]])
   # Add errors if the columns are not in the code
   # if sp is in the dataset, separate by species (if species as columns then change)
-  #TODO Add 
+  #TODO Add
   #if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
   # if data not summarised plot points else plot barplot
   if (nrow(results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
@@ -315,7 +315,7 @@ makeGraph <- function(tools, results, i) {
 }
 
 #' @title makeSummary
-#' 
+#'
 #' @description make graph from the result of the previous tool
 #' @param results the results from the previous tools
 #' @param i the number of the step
@@ -337,8 +337,8 @@ makeSummary <- function (tools, results, i) {
 }
 
 #' @title makeErrorBars
-#' 
-#' @description add ErrorBars to a graph 
+#'
+#' @description add ErrorBars to a graph
 #' @param results the results from the previous tools
 #' @param i the number of the step
 makeErrorBars <- function(tools, results, i){
@@ -352,7 +352,7 @@ makeErrorBars <- function(tools, results, i){
 
 # not functionning
 #' @title makeMap
-#' 
+#'
 #' @description make a map with the departements
 #' @param results the results from the previous tools
 #' @param i the number of the step
@@ -366,14 +366,14 @@ makeMap <- function(tools, results, i){
       unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
     }
     departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                    quiet = TRUE) %>% 
+                                    quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
-    
+
     departements_L93 <- mapToPlot()
     geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
       sf::st_transform(2154)
-    
+
     tmap::tm_shape(geoData) +
       tmap::tm_borders() +
       tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
@@ -399,7 +399,7 @@ abundanceCard <- function (dataset, groupVariable = character(0)) {
       dplyr::group_by_at(groupVariable) %>%
       dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
                        IntervalleDeConfiance = se(Abondance))
-    
+
   }
   return(res)
 }
@@ -420,7 +420,7 @@ diversityCard <- function (dataset, groupVariable = character(0)) {
       dplyr::group_by_at(groupVariable) %>%
       dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
                        IntervalleDeConfiance = se(Diversite))
-    
+
   }
   return(res)
 }
@@ -443,7 +443,7 @@ observationCard <- function (dataset, groupVariable = character(0)) {
 
 
 #' @title makeGraph
-#' 
+#'
 #' @description make graph from the result of the previous tool
 #' @param results the results from the previous tools
 #' @param tools is the list of the tools used
@@ -454,7 +454,7 @@ makeGraph <- function(tools, results, i) {
   colNamesData <- colnames(results[[i-1]])
   # Add errors if the columns are not in the code
   # if sp is in the dataset, separate by species (if species as columns then change)
-  #TODO Add 
+  #TODO Add
   #if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
   # if data not summarised plot points else plot barplot
   if (nrow(results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
@@ -472,12 +472,17 @@ makeGraphEasy <- function (dataset){
   columnsNames <- names(dataset)
   x <- columnsNames[1]
   y <- columnsNames[2]
-  
+
   if ("IntervalleDeConfiance" %in% colnames(dataset)){
-    # TO DO Make error bars !!!!
+    dataset <- dataset %>%
+      mutate(errorPlus = !!ensym(y) + IntervalleDeConfiance,
+             errorMoins = !!ensym(y) - IntervalleDeConfiance)
   }
-  ggplot(dataset, aes(x = !!ensym(x), y = !!ensym(y)))+
-    ggplot2::geom_col(aes(fill = !!ensym(x)))+
+
+  ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))+
+    ggplot2::geom_col(ggplot2::aes(fill = !!ensym(x)))+
+    ggplot2::geom_errorbar(ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
+                           width = .2)+
     ggplot2::theme_minimal()+
     ggplot2::theme(axis.text=element_text(size=12),
                    axis.title=element_text(size=16),
@@ -495,14 +500,14 @@ makeMapEasy <- function(dataset) {
       unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
     }
     departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                    quiet = TRUE) %>% 
+                                    quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
-    
+
     departements_L93 <- mapToPlot()
     geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
       sf::st_transform(2154)
-    
+
     tmap::tm_shape(geoData) +
       tmap::tm_borders() +
       tmap::tm_fill(col = correspond(dataset[ , 2], EquivalenceVar))
@@ -520,6 +525,3 @@ makeTop <- function (dataset, topLength = 10){
   res <- dataset[order(data.frame(dataset)[ , 2], decreasing = TRUE), ]
   head(res, topLength)
 }
-
-
-

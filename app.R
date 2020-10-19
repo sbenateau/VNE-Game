@@ -90,7 +90,7 @@ server <- function(input, output) {
       #separate code to get clear instructions
       tools <- parsedCode()
       #tools <- unlist(strsplit(code, ":"))
-      print(tools)
+      
       # create a list with size = nomber of tools
       results <- vector(mode = "list", length = length(tools))
       
