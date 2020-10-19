@@ -22,7 +22,7 @@ EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 #' 
 #' @param x a numeric vector 
 mean2 <- function(x) {
-  mean(x, na.rm = TRUE)
+  round(mean(x, na.rm = TRUE), 1)
 }
 
 #' @title sd2
@@ -379,3 +379,147 @@ makeMap <- function(tools, results, i){
       tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
   }
 }
+
+
+# Make abundance according to one variable
+
+abundanceCard <- function (dataset, groupVariable = character(0)) {
+  if (identical(groupVariable, character(0))){
+    res <- dataset %>%
+      dplyr::group_by(Numero_observation) %>%
+      dplyr::summarise(Abondance = sum2(Nombre_individus)) %>%
+      dplyr::ungroup()%>%
+      dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
+                       IntervalleDeConfiance = se(Abondance))
+  } else {
+    res <- dataset %>%
+      dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
+      dplyr::summarise(Abondance = sum2(Nombre_individus)) %>%
+      dplyr::ungroup()%>%
+      dplyr::group_by_at(groupVariable) %>%
+      dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
+                       IntervalleDeConfiance = se(Abondance))
+    
+  }
+  return(res)
+}
+
+diversityCard <- function (dataset, groupVariable = character(0)) {
+  if (identical(groupVariable, character(0))){
+    res <- dataset %>%
+      dplyr::group_by(Numero_observation) %>%
+      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
+      dplyr::ungroup()%>%
+      dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
+                       IntervalleDeConfiance = se(Diversite))
+  } else {
+    res <- dataset %>%
+      dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
+      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
+      dplyr::ungroup()%>%
+      dplyr::group_by_at(groupVariable) %>%
+      dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
+                       IntervalleDeConfiance = se(Diversite))
+    
+  }
+  return(res)
+}
+
+observationCard <- function (dataset, groupVariable = character(0)) {
+  if (identical(groupVariable, character(0))){
+    res <- dataset %>%
+      select(Numero_observation)%>%
+      distinct()%>%
+      summarise(NombreDObservations = length(Numero_observation))
+  } else {
+    res <- dataset %>%
+      select_at(c("Numero_observation", groupVariable)) %>%
+      distinct() %>%
+      dplyr::group_by_at(groupVariable) %>%
+      summarise(NombreDObservations = length(Numero_observation))
+  }
+  return(res)
+}
+
+
+#' @title makeGraph
+#' 
+#' @description make graph from the result of the previous tool
+#' @param results the results from the previous tools
+#' @param tools is the list of the tools used
+#' @param i the number of the step
+makeGraph <- function(tools, results, i) {
+  # get parameters (improve by locating the graph within the code)
+  # get the name of the column to check few thing
+  colNamesData <- colnames(results[[i-1]])
+  # Add errors if the columns are not in the code
+  # if sp is in the dataset, separate by species (if species as columns then change)
+  #TODO Add 
+  #if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
+  # if data not summarised plot points else plot barplot
+  if (nrow(results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
+  # graph is too specific right now
+  ggplot2::ggplot(results[[i-1]], ggplot2::aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
+    representation +
+    #facet +
+    ggplot2::theme_minimal()+
+    ggplot2::theme(axis.text=element_text(size=12),
+                   axis.title=element_text(size=16),
+                   strip.text.x = element_text(size = 14))
+}
+
+makeGraphEasy <- function (dataset){
+  columnsNames <- names(dataset)
+  x <- columnsNames[1]
+  y <- columnsNames[2]
+  
+  if ("IntervalleDeConfiance" %in% colnames(dataset)){
+    # TO DO Make error bars !!!!
+  }
+  ggplot(dataset, aes(x = !!ensym(x), y = !!ensym(y)))+
+    ggplot2::geom_col(aes(fill = !!ensym(x)))+
+    ggplot2::theme_minimal()+
+    ggplot2::theme(axis.text=element_text(size=12),
+                   axis.title=element_text(size=16),
+                   strip.text.x = element_text(size = 14),
+                   legend.position = "none")
+}
+
+
+makeMapEasy <- function(dataset) {
+  if (dataset[ , 1] == "Dep"){
+    extraWD = "data"
+    if (!file.exists(file.path(extraWD, "departement.zip"))) {
+      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
+      download.file(githubURL, file.path(extraWD, "departement.zip"))
+      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
+    }
+    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
+                                    quiet = TRUE) %>% 
+      dplyr::rename(Departement = CODE_DEPT) %>%
+      sf::st_transform(2154)
+    
+    departements_L93 <- mapToPlot()
+    geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
+      sf::st_transform(2154)
+    
+    tmap::tm_shape(geoData) +
+      tmap::tm_borders() +
+      tmap::tm_fill(col = correspond(dataset[ , 2], EquivalenceVar))
+  }
+}
+
+getSpeciesNumber <- function(dataset) {
+ dataset %>%
+    filter(Nombre_individus > 0) %>%
+    group_by(Espece) %>%
+    summarise(Nombre = n())
+}
+
+makeTop <- function (dataset, topLength = 10){
+  res <- dataset[order(data.frame(dataset)[ , 2], decreasing = TRUE), ]
+  head(res, topLength)
+}
+
+
+

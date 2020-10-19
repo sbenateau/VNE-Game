@@ -5,6 +5,10 @@
 #
 #
 #####################################################
+
+# Masquer le changement de page ???
+
+
 # TODO ajouter une legende indiquant ce qu'est la valeur de variable (ex: moyenne individus)
 # D:RZonEnvSoInd:REnvMoInd:GEnvXyInd
 
@@ -20,23 +24,23 @@ source('RenderCards.R')
 ui <- fluidPage(
   # Application title
   #titlePanel("Datathon"),
-
-
+  
+  
   # Sidebar with inputs
   sidebarLayout(
     sidebarPanel(
       # Logo de l'application
       tags$img(src = "Logo_Paper.png", width = '100%'),
       HTML("<br><br>"),
-
-
+      
+      
       textInput("code", "Entrez votre code :", value = ""),
       tags$head(
         tags$style(HTML('#run{background-color:orange}'))
       ),
       submitButton(text = "Validez le code", icon = NULL, width = NULL)
     ),
-
+    
     # Show the outputs from the treatment
     mainPanel(
       uiOutput("Cards"),
@@ -48,10 +52,10 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-
+  
   # Variable initialization
   rv <- reactiveValues()
-
+  
   #Import map
   mapToPlot <- reactive({
     extraWD = "data"
@@ -66,76 +70,96 @@ server <- function(input, output) {
       sf::st_transform(2154)
     departements_L93
   })
-
+  
   # Breakdown code
   parsedCode <- reactive({
     unlist(strsplit(input$code, ":"))
   })
-
+  
   # Reactive containing a list for each tool.
   results <- reactive({
     code <- input$code
-
+    
     if (code != "" ){
-
+      
       # Get the data
-
+      
       #Data <- data.frame(getDataInitial(observatory = "Ois"))
       # TODO allow different possibilities
-
+      
       #separate code to get clear instructions
       tools <- parsedCode()
       #tools <- unlist(strsplit(code, ":"))
-
+      print(tools)
       # create a list with size = nomber of tools
       results <- vector(mode = "list", length = length(tools))
-
+      
       #loop to execute all the steps
       for (i in 1:length(tools)){
+        Parameters <- separateParametersTreatment(tools[i])
+        toolname = substring(tools[i], 1, 1)
         # case tool = data
-        if (substring(tools[i], 1, 1) ==  "D"){
-          Parameters <- separateParametersTreatment(tools[i])
+        if (toolname ==  "D"){
           results[[i]] <- data.frame(getDataInitial(observatory = Parameters[2]))
-        } else if (tools[i] == "M") {
+        } else if (toolname == "M") {
           results[[i]] = randomAll(results[[i-1]])
-        } else if (substring(tools[i], 1, 1) == "R"){
+        } else if (toolname == "A") {
+          results[[i]] <- abundanceCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+        } else if (toolname == "E") {
+          results[[i]] <- diversityCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+        } else if (toolname == "N") {
+          results[[i]] <- observationCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+        }
+        else if (toolname == "R"){
           results[[i]] <- makeSummary(tools, results, i)
-        } else if (substring(tools[i], 1, 1) == "T"){
-          Parameters <- separateParametersTreatment(tools[i])
-          results[[i]] <- results[[i-1]] %>%
-            dplyr::arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
-        } else if (substring(tools[i], 1, 1) == "G"){
-          results[[i]] <- makeGraph(tools, results, i)
-        } else if (substring(tools[i], 1, 1) == "B"){
+        } else if (toolname == "T"){
+          results[[i-1]] <- makeTop(results[[i-1]])
+        # } else if (toolname == "T"){
+        #   results[[i]] <- results[[i-1]] %>%
+        #     dplyr::arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
+        } else if (toolname == "G"){
+          results[[i]] <- makeGraphEasy(dataset = results[[i-1]])
+        } else if (toolname == "B"){
           results[[i]] <- makeErrorBars(tools, results, i)
-        } else if (substring(tools[i], 1, 1) == "P"){
-          Parameters <- separateParametersTreatment(tools[i])
-          if (!Parameters[[2]] == "Dep"){
+        } else if (toolname == "C"){
+          if ("Departement" %in% colnames(results[[i-1]])){
             departements_L93 <- mapToPlot()
+            print(departements_L93)
+            print(results[[i-1]])
+            print(nrow(results[[i-1]]))
             geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
               sf::st_transform(2154)
-
+            
+            
             results[[i]] <- tmap::tm_shape(geoData) +
               tmap::tm_borders() +
-              tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
+              tmap::tm_fill(col = colnames(results[[i-1]])[2])
           }
-
-        }
-        else{
+        } else if (toolname == "V"){
+          results[[i]] <- getSpeciesNumber(results[[i-1]])
+        } else {
           msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ":"), ")\n")
           warning(msg)
         }
         # TODO in case of typo, any default value?
       }
+      
       # Remove se column for display (only used to add error bars)
       if (any(stringr::str_detect(tools,"Mo"))){
         results[[which(str_detect(tools, "Mo"))]] <- results[[which(str_detect(tools, "Mo"))]][-which(names(results[[which(str_detect(tools, "Mo"))]]) == "se")]
       }
+      # clean results
+      for (i in 1:length(tools)){
+
+        if ("IntervalleDeConfiance" %in% colnames(results[[i]])){
+          results[[i]] <- results[[i]][ , -which(colnames(results[[i]]) == "IntervalleDeConfiance")]
+        }
+      }
       results
     }
-
+    
   })
-
+  
   # Procedurally generate UI by calling multiple times the renderCards module
   output$Cards <- renderUI({
     # Check for input's content
@@ -170,7 +194,7 @@ server <- function(input, output) {
     Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
     matrix(unlist(Debug), ncol = 3, byrow = TRUE)
   })
-
+  
   output$Error <- renderText({
     # Découpage du code
     fullCode <- input$code
@@ -188,7 +212,7 @@ server <- function(input, output) {
     } else if (length(missingFunction) > 1){
       message <- c(message, paste("Les fonctions : ", paste(missingFunction, collapse = ", "), "n'ont pas été trouvées, "))
     }
-    missingTool <- informations$toolUsed[!informations$toolUsed %in% c("D", "M", "R", "P", "T", "G", "B" )]
+    missingTool <- informations$toolUsed[!informations$toolUsed %in% c("D", "M", "R", "P", "T", "G", "B", "A", "C" )]
     if (length(missingTool) == 1){
       message <- c(message, paste("L'outil : ", missingTool, "n'a pas été trouvé, "))
     } else if (length(missingTool) > 1){
@@ -198,7 +222,7 @@ server <- function(input, output) {
       paste(paste(message, collapse = ""), "Vérifiez votre code.")
     }
   })
-
+  
   # Procedurally generate server by calling multiple times renderCards module's server
   observe(
     sapply(seq_along(parsedCode()), function (toolPosition){
@@ -208,7 +232,7 @@ server <- function(input, output) {
                                                       results()[[toolPosition]], input$code)
     })
   )
-
+  
 }
 
 # Run the application

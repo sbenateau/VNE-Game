@@ -19,22 +19,30 @@ renderCardsUI <- function(id, parsedCode) {
     bsCollapsePanel(
       title = switch(toolID,
                      G = "Graphique",
+                     A = "Calculer le nombre moyen d’individus",
+                     E = "Calculer le nombre moyen d’espèces",
+                     N = "Compter le nombre d’observations",
+                     V = "Compter le nombre de fois où les espèces ont été vues",
                      M = "Mélanger les données",
                      B = "Graphique avec barres d'erreurs",
                      R = "Regrouper des lignes",
                      S = "Scientifique",
-                     P = "Carte",
+                     C = "Carte",
                      D = "Données",
-                     T = "Tri",
+                     T = "Top",
                      "Autre outil"),
       tagList(
         switch(toolID,
                G = plotOutput(ns(id)),
                B = plotOutput(ns(id)),
-               P = plotOutput(ns(id)),
+               C = plotOutput(ns(id)),
                S = uiOutput(ns(id)),
                D = DT::dataTableOutput(ns(id)),
                R = DT::dataTableOutput(ns(id)),
+               A = DT::dataTableOutput(ns(id)),
+               N = DT::dataTableOutput(ns(id)),
+               E =DT::dataTableOutput(ns(id)),
+               V = DT::dataTableOutput(ns(id)),
                tableOutput(ns(id))
         )
       )
@@ -53,14 +61,18 @@ renderCards <- function(input, output, session,
   # values are returned in `rv` in app.R
   output[[id]] <- switch(unlist(strsplit(toolCode, ""))[1],
                          G = renderPlot(Results),
-                         P = renderPlot(Results),
+                         C = renderPlot(Results),
                          B = renderPlot(Results),
                          D = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
                          R = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         A = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         N = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         E = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         V = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
                          S = renderUI({
                            # Découpage du code
                            informations <- codeInformation(fullCode)
-
+                           
                            if (!"D" %in% informations$toolUsed) { # Pas de données
                              # Il manque les données : vidéo à refaire
                              link = "1143628"
