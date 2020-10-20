@@ -63,9 +63,9 @@ lengthSupZero <- function(x) {
 #' @title se
 #'
 #' @param x a numeric vector
-se <- function(x){
+confidence_interval <- function(x){
   x2 <- na.omit(x)
-  sd(x2)/sqrt(length(x2))
+  1.96*sd(x2)/sqrt(length(x2))
 }
 
 
@@ -325,7 +325,7 @@ makeSummary <- function (tools, results, i) {
   if (Parameters[[3]] == "Mo"){
     res <- results[[i-1]] %>%
       dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","se"))
+      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","confidence_interval"))
     # rename with the right name
     colnames(res)[which(colnames(res) == "mean")] <- correspond(Parameters[[2]], EquivalenceVar)
   } else {
@@ -344,8 +344,8 @@ makeSummary <- function (tools, results, i) {
 makeErrorBars <- function(tools, results, i){
   Parameters <- separateParametersTreatment(tools[i-1])
   results[[i-1]]$data <- results[[i-1]]$data %>%
-    dplyr::mutate(ymin = Nombre_individus + 1.96 * se,
-                  ymax = Nombre_individus - 1.96 * se)
+    dplyr::mutate(ymin = Nombre_individus + confidence_interval,
+                  ymax = Nombre_individus - confidence_interval)
   return(results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2))
 }
 
@@ -390,7 +390,7 @@ abundanceCard <- function (dataset, groupVariable = character(0)) {
       dplyr::summarise(Abondance = sum2(Nombre_individus)) %>%
       dplyr::ungroup()%>%
       dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
-                       IntervalleDeConfiance = se(Abondance))
+                       IntervalleDeConfiance = confidence_interval(Abondance))
   } else {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
@@ -398,7 +398,7 @@ abundanceCard <- function (dataset, groupVariable = character(0)) {
       dplyr::ungroup()%>%
       dplyr::group_by_at(groupVariable) %>%
       dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
-                       IntervalleDeConfiance = se(Abondance))
+                       IntervalleDeConfiance = confidence_interval(Abondance))
 
   }
   return(res)
@@ -411,7 +411,7 @@ diversityCard <- function (dataset, groupVariable = character(0)) {
       dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
       dplyr::ungroup()%>%
       dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
-                       IntervalleDeConfiance = se(Diversite))
+                       IntervalleDeConfiance = confidence_interval(Diversite))
   } else {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
@@ -419,7 +419,7 @@ diversityCard <- function (dataset, groupVariable = character(0)) {
       dplyr::ungroup()%>%
       dplyr::group_by_at(groupVariable) %>%
       dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
-                       IntervalleDeConfiance = se(Diversite))
+                       IntervalleDeConfiance = confidence_interval(Diversite))
 
   }
   return(res)
