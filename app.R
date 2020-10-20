@@ -212,7 +212,7 @@ server <- function(input, output) {
     } else if (length(missingFunction) > 1){
       message <- c(message, paste("Les fonctions : ", paste(missingFunction, collapse = ", "), "n'ont pas été trouvées, "))
     }
-    missingTool <- informations$toolUsed[!informations$toolUsed %in% c("D", "M", "R", "P", "T", "G", "B", "A", "C" )]
+    missingTool <- informations$toolUsed[!informations$toolUsed %in% c("D", "M", "R", "P", "T", "G", "B", "A", "C", "E" )]
     if (length(missingTool) == 1){
       message <- c(message, paste("L'outil : ", missingTool, "n'a pas été trouvé, "))
     } else if (length(missingTool) > 1){
