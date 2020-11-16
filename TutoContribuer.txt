@@ -1,0 +1,34 @@
+- Avoir notepad ou un autre editeur de texte installé
+- avoir un compte github
+
+- installer git
+- choisir notepad ou autre chose pour l'éditeur
+- Garder les paramètres par défaut
+
+- Installer GitHub Desktop
+
+- Clone repository
+
+- Choisir le dossier dans lequel tu souhaites mettre tes documents (dans l'idéal : C:github/)
+
+- Commencer à tout modifier
+
+Page de garde (1)
+
+Scénario 2
+
+Y a-t-il plus d'oiseaux à la campagne ou en ville ?
+
+Page Etape 2.1 (5)
+
+Commencer par vérifier la quantité de données récoltée dans chaque type de milieu.
+
+... observations réalisées dans chacun des types de milieu.
+
+page correction 
+
+... et place le jeton "type de milieu"
+
+...faites dans chaque type de milieu
+
+
