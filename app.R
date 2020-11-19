@@ -148,12 +148,12 @@ server <- function(input, output) {
       if (any(stringr::str_detect(tools,"Mo"))){
         results[[which(str_detect(tools, "Mo"))]] <- results[[which(str_detect(tools, "Mo"))]][-which(names(results[[which(str_detect(tools, "Mo"))]]) == "se")]
       }
-      # clean results
+      # clean results for print functions
       for (i in 1:length(tools)){
 
         if ("IntervalleDeConfiance" %in% colnames(results[[i]])){
           results[[i]] <- results[[i]][ , -which(colnames(results[[i]]) == "IntervalleDeConfiance")]
-        }
+        } 
       }
       results
     }

@@ -17,7 +17,7 @@ EquivalenceFun <- read.csv("data/EquivalenceFun.csv", sep = ",", row.names = 1)
 
 # Function for operation ----
 
-# Modification of the functions to handle NA values
+# Modification of the functions to handle NA values and round to one digit
 #' @title mean2
 #'
 #' @param x a numeric vector
@@ -74,7 +74,7 @@ getDataInitial <- function(directory = "data/", observatory){
   if (observatory == "Vdt"){
     # Upload complete data Earth Worm
     jeuDeDonnees <- data.table::fread(paste0(directory,"VersDeTerre.csv"))
-
+    
     # add placette (to keep the number of row)
     Placette <- rep(c("1","2","3"),nrow(jeuDeDonnees)/3)
     jeuDeDonnees$Placette <- Placette
@@ -104,12 +104,12 @@ getDataInitial <- function(directory = "data/", observatory){
                       Longitude,
                       Latitude) %>%
       dplyr::summarise(Nombre_individus = sum2(Nombre_individus))
-
-
+    
+    
     # reorder columns
     colnamesDf <- colnames(jeuDeDonneesReduction)
     jeuDeDonneesReduction <- jeuDeDonneesReduction[c(colnamesDf[1:3],colnamesDf[length(colnamesDf)],colnamesDf[-c(1:3, length(colnamesDf))])]
-
+    
     # pour l'ordre dans les futurs graphiques
     #Turn your 'treatment' column into a character vector
     #Then turn it back into a factor with the levels in the correct order
@@ -281,7 +281,7 @@ codeInformation <- function (fullCode){
   # fonctions utilisées
   funUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
   funUsed <- str_sub(funUsed, start = 1, end = 2)
-
+  
   informations <- list(toolUsed, varUsed, funUsed)
   names(informations) <- c("toolUsed", "varUsed", "funUsed")
   informations
@@ -369,11 +369,11 @@ makeMap <- function(tools, results, i){
                                     quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
-
+    
     departements_L93 <- mapToPlot()
     geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
       sf::st_transform(2154)
-
+    
     tmap::tm_shape(geoData) +
       tmap::tm_borders() +
       tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
@@ -399,7 +399,7 @@ abundanceCard <- function (dataset, groupVariable = character(0)) {
       dplyr::group_by_at(groupVariable) %>%
       dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
                        IntervalleDeConfiance = confidence_interval(Abondance))
-
+    
   }
   return(res)
 }
@@ -410,17 +410,23 @@ diversityCard <- function (dataset, groupVariable = character(0)) {
       dplyr::group_by(Numero_observation) %>%
       dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
       dplyr::ungroup()%>%
-      dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
-                       IntervalleDeConfiance = confidence_interval(Diversite))
+      dplyr::summarise(
+        SommeDiversite = sum(Diversite, na.rm = TRUE),
+        NombreParticipations = length(Diversite),
+        DiversiteMoyenne = mean2(Diversite),
+        IntervalleDeConfiance = confidence_interval(Diversite))
   } else {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
       dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
       dplyr::ungroup()%>%
       dplyr::group_by_at(groupVariable) %>%
-      dplyr::summarise(DiversiteMoyenne = mean2(Diversite),
-                       IntervalleDeConfiance = confidence_interval(Diversite))
-
+      dplyr::summarise(
+        `Somme des espèces observées` = sum(Diversite, na.rm = TRUE),
+        `Nombre de participations` = length(Diversite),
+        `Diversité Moyenne` = mean2(Diversite),
+        IntervalleDeConfiance = confidence_interval(Diversite))
+    
   }
   return(res)
 }
@@ -471,14 +477,14 @@ makeGraph <- function(tools, results, i) {
 makeGraphEasy <- function (dataset){
   columnsNames <- names(dataset)
   x <- columnsNames[1]
-  y <- columnsNames[2]
-
+  y <- columnsNames[length(names(dataset))]
+  
   if ("IntervalleDeConfiance" %in% colnames(dataset)){
     dataset <- dataset %>%
       mutate(errorPlus = !!ensym(y) + IntervalleDeConfiance,
              errorMoins = !!ensym(y) - IntervalleDeConfiance)
   }
-
+  
   ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))+
     ggplot2::geom_col(ggplot2::aes(fill = !!ensym(x)))+
     ggplot2::geom_errorbar(ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
@@ -503,19 +509,19 @@ makeMapEasy <- function(dataset) {
                                     quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
-
+    
     departements_L93 <- mapToPlot()
     geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
       sf::st_transform(2154)
-
+    
     tmap::tm_shape(geoData) +
       tmap::tm_borders() +
-      tmap::tm_fill(col = correspond(dataset[ , 2], EquivalenceVar))
+      tmap::tm_fill(col = correspond(dataset[ , length(names(dataset))], EquivalenceVar))
   }
 }
 
 getSpeciesNumber <- function(dataset) {
- dataset %>%
+  dataset %>%
     filter(Nombre_individus > 0) %>%
     group_by(Espece) %>%
     summarise(Nombre = n())
