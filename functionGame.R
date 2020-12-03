@@ -521,7 +521,7 @@ getSpeciesNumber <- function(dataset) {
     summarise(Nombre = n())
 }
 
-makeTop <- function (dataset, topLength = 10){
+makeTop <- function (dataset, topLength = 20){
   res <- dataset[order(data.frame(dataset)[ , 2], decreasing = TRUE), ]
   head(res, topLength)
 }

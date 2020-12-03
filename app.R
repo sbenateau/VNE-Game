@@ -19,6 +19,7 @@ library(shinyBS)
 # load the functions to run the game
 source('functionGame.R')
 source('RenderCards.R')
+source('functions_detection.R')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -30,8 +31,10 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       # Logo de l'application
-      tags$img(src = "Logo_Paper.png", width = '100%'),
+      tags$img(src = "logo_papers.png", width = '100%'),
       HTML("<br><br>"),
+      
+      selectInput("choice", "Type d'interface :", c("image","code"), selected = "image"),
       
       
       textInput("code", "Entrez votre code :", value = ""),
