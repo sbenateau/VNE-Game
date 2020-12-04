@@ -41,7 +41,7 @@ renderCardsUI <- function(id, parsedCode) {
                R = DT::dataTableOutput(ns(id)),
                A = DT::dataTableOutput(ns(id)),
                N = DT::dataTableOutput(ns(id)),
-               E =DT::dataTableOutput(ns(id)),
+               E = DT::dataTableOutput(ns(id)),
                V = DT::dataTableOutput(ns(id)),
                tableOutput(ns(id))
         )
@@ -63,12 +63,12 @@ renderCards <- function(input, output, session,
                          G = renderPlot(Results),
                          C = renderPlot(Results),
                          B = renderPlot(Results),
-                         D = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
-                         R = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
-                         A = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
-                         N = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
-                         E = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
-                         V = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE)),
+                         D = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
+                         R = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
+                         A = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
+                         N = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
+                         E = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
+                         V = DT::renderDataTable(Results, options = list(pageLength = 24, dom = 'tp', searching = FALSE), escape = FALSE),
                          S = renderUI({
                            # Découpage du code
                            informations <- codeInformation(fullCode)

@@ -22,30 +22,22 @@ source('RenderCards.R')
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  # Application title
-  #titlePanel("Datathon"),
-  
-  
+
   # Sidebar with inputs
   sidebarLayout(
     sidebarPanel(
       # Logo de l'application
       tags$img(src = "Logo_Paper.png", width = '100%'),
       HTML("<br><br>"),
-      
-      
       textInput("code", "Entrez votre code :", value = ""),
-      tags$head(
-        tags$style(HTML('#run{background-color:orange}'))
-      ),
       submitButton(text = "Validez le code", icon = NULL, width = NULL)
     ),
     
     # Show the outputs from the treatment
     mainPanel(
-      uiOutput("Cards"),
+      uiOutput("Cards")#,
       #tableOutput("Debug"),
-      textOutput("Error")
+      #textOutput("Error")
     )
   )
 )
@@ -89,6 +81,9 @@ server <- function(input, output) {
       
       #separate code to get clear instructions
       tools <- parsedCode()
+      #code = "DOis:EEnv:G"
+      #code = "DOis:NDep:T"
+      #code = "DOis:V:T"
       #tools <- unlist(strsplit(code, ":"))
       
       # create a list with size = nomber of tools
@@ -100,43 +95,45 @@ server <- function(input, output) {
         toolname = substring(tools[i], 1, 1)
         # case tool = data
         if (toolname ==  "D"){
-          results[[i]] <- data.frame(getDataInitial(observatory = Parameters[2]))
+          results[[i]][[1]] <- data.frame(getDataInitial(observatory = Parameters[2]))
+          results[[i]][[2]] <- data.frame(getDataInitial(observatory = Parameters[2]))
         } else if (toolname == "M") {
-          results[[i]] = randomAll(results[[i-1]])
+          results[[i]][[1]] = randomAll(results[[i-1]][[1]])
         } else if (toolname == "A") {
-          results[[i]] <- abundanceCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+          results[[i]] <- abundanceCard(dataset = results[[i-1]][[1]], group_variable = correspond(Parameters[[2]], EquivalenceVar))
         } else if (toolname == "E") {
-          results[[i]] <- diversityCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+          results[[i]] <- diversityCard(dataset = results[[i-1]][[1]], group_variable = correspond(Parameters[[2]], EquivalenceVar))
         } else if (toolname == "N") {
-          results[[i]] <- observationCard(dataset = results[[i-1]], groupVariable = correspond(Parameters[[2]], EquivalenceVar))
+          results[[i]] <- observationCard(dataset = results[[i-1]][[1]], group_variable = correspond(Parameters[[2]], EquivalenceVar))
         }
         else if (toolname == "R"){
-          results[[i]] <- makeSummary(tools, results, i)
+          results[[i]][[1]] <- makeSummary(tools, results, i)
         } else if (toolname == "T"){
-          results[[i-1]] <- makeTop(results[[i-1]])
+          results[[i]][[2]] <- makeTop(results[[i-1]][[1]])
         # } else if (toolname == "T"){
         #   results[[i]] <- results[[i-1]] %>%
         #     dplyr::arrange(desc(!!sym(correspond(Parameters[[2]], EquivalenceVar))))
         } else if (toolname == "G"){
-          results[[i]] <- makeGraphEasy(dataset = results[[i-1]])
+          results[[i]][[2]] <- makeGraphEasy(dataset = results[[i-1]][[1]])
         } else if (toolname == "B"){
-          results[[i]] <- makeErrorBars(tools, results, i)
+          results[[i]][[2]] <- makeErrorBars(tools, results, i)
         } else if (toolname == "C"){
-          if ("Departement" %in% colnames(results[[i-1]])){
+          if ("Departement" %in% colnames(results[[i-1]][[1]])){
             departements_L93 <- mapToPlot()
             print(departements_L93)
-            print(results[[i-1]])
-            print(nrow(results[[i-1]]))
-            geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
+            print(results[[i-1]][[1]])
+            print(nrow(results[[i-1]][[1]]))
+            geoData = dplyr::left_join(departements_L93, results[[i-1]][[1]], by = 'Departement') %>%
               sf::st_transform(2154)
             
             
-            results[[i]] <- tmap::tm_shape(geoData) +
+            results[[i]][[2]] <- tmap::tm_shape(geoData) +
               tmap::tm_borders() +
-              tmap::tm_fill(col = colnames(results[[i-1]])[2])
+              tmap::tm_fill(col = colnames(results[[i-1]][[1]])[2])
           }
         } else if (toolname == "V"){
-          results[[i]] <- getSpeciesNumber(results[[i-1]])
+          results[[i]][[1]] <- getSpeciesNumber(results[[i-1]][[1]])
+          results[[i]][[2]] <- getSpeciesNumber(results[[i-1]][[1]])
         } else {
           msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ":"), ")\n")
           warning(msg)
@@ -229,7 +226,7 @@ server <- function(input, output) {
       rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
                                                       toolPosition, # repeated to be given as additional argument
                                                       parsedCode(),
-                                                      results()[[toolPosition]], input$code)
+                                                      results()[[toolPosition]][[2]], input$code)
     })
   )
   

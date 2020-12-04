@@ -287,6 +287,9 @@ codeInformation <- function (fullCode){
   informations
 }
 
+
+# All the card that make calculations functions will generate a list : the table for calculations and the table for UI
+
 #' @title makeGraph
 #'
 #' @description make graph from the result of the previous tool
@@ -383,68 +386,102 @@ makeMap <- function(tools, results, i){
 
 # Make abundance according to one variable
 
-abundanceCard <- function (dataset, groupVariable = character(0)) {
-  if (identical(groupVariable, character(0))){
+abundanceCard <- function (dataset, group_variable = character(0)) {
+  if (identical(group_variable, character(0))){
     res <- dataset %>%
       dplyr::group_by(Numero_observation) %>%
       dplyr::summarise(Abondance = sum2(Nombre_individus)) %>%
       dplyr::ungroup()%>%
       dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
                        IntervalleDeConfiance = confidence_interval(Abondance))
+    
+    resCalc = res[ , c("abondance_moyenne", "intervalle_de_confiance")]
+    resUI = res[ , c("somme_abondance", "nombre_participation", "abondance_moyenne")]
+    resUI$abondance_moyenne <- paste("<b>",resUI$abondance_moyenne,"</b>")
+    colnames(resUI) = c("Somme de l'abondance", "Nombre de protocoles réalisés", "Abondance Moyenne")
   } else {
     res <- dataset %>%
-      dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
-      dplyr::summarise(Abondance = sum2(Nombre_individus)) %>%
+      dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+      dplyr::summarise(abondance = sum2(Nombre_individus)) %>%
       dplyr::ungroup()%>%
-      dplyr::group_by_at(groupVariable) %>%
-      dplyr::summarise(AbondanceMoyenne = mean2(Abondance),
-                       IntervalleDeConfiance = confidence_interval(Abondance))
+      dplyr::group_by_at(group_variable) %>%
+      dplyr::summarise(
+        somme_abondance = sum2(abondance),
+        nombre_participation = length(abondance),
+        abondance_moyenne = mean2(abondance),
+        intervalle_de_confiance = confidence_interval(abondance)) %>%
+      ungroup()
     
+    resCalc = res[ , c(group_variable, "abondance_moyenne", "intervalle_de_confiance")]
+    resUI = res[ , c(group_variable, "somme_abondance", "nombre_participation", "abondance_moyenne")]
+    resUI$abondance_moyenne <- paste("<b>",resUI$abondance_moyenne,"</b>")
+    colnames(resUI) = c(group_variable, "Somme de l'abondance", "Nombre de protocoles réalisés", "Abondance Moyenne")
   }
-  return(res)
+  result_list <- list(resCalc, resUI)
+  return(result_list)
 }
 
-diversityCard <- function (dataset, groupVariable = character(0)) {
-  if (identical(groupVariable, character(0))){
+diversityCard <- function (dataset, group_variable = character(0)) {
+  if (identical(group_variable, character(0))){
     res <- dataset %>%
       dplyr::group_by(Numero_observation) %>%
       dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
       dplyr::ungroup()%>%
       dplyr::summarise(
-        SommeDiversite = sum(Diversite, na.rm = TRUE),
-        NombreParticipations = length(Diversite),
-        DiversiteMoyenne = mean2(Diversite),
-        IntervalleDeConfiance = confidence_interval(Diversite))
+        somme_diversite = sum(Diversite, na.rm = TRUE),
+        nombre_participation = length(Diversite),
+        diversite_moyenne = mean2(Diversite),
+        intervalle_de_confiance = confidence_interval(Diversite))
+    
+    resCalc = res[ , c("diversite_moyenne", "intervalle_de_confiance")]
+    resUI = res[ , c("somme_diversite", "nombre_participation", "diversite_moyenne")]
+    resUI$diversite_moyenne <- paste("<b>",resUI$diversite_moyenne,"</b>")
+    colnames(resUI) = c("Somme des espèces observées", "Nombre de protocoles réalisés", "Diversité Moyenne")
   } else {
     res <- dataset %>%
-      dplyr::group_by_at(c("Numero_observation", groupVariable)) %>%
+      dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
       dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
       dplyr::ungroup()%>%
-      dplyr::group_by_at(groupVariable) %>%
+      dplyr::group_by_at(group_variable) %>%
       dplyr::summarise(
-        `Somme des espèces observées` = sum(Diversite, na.rm = TRUE),
-        `Nombre de participations` = length(Diversite),
-        `Diversité Moyenne` = mean2(Diversite),
-        IntervalleDeConfiance = confidence_interval(Diversite))
+        somme_diversite = sum(Diversite, na.rm = TRUE),
+        nombre_participation = length(Diversite),
+        diversite_moyenne = mean2(Diversite),
+        intervalle_de_confiance = confidence_interval(Diversite))
+    
+    resCalc = res[ , c(group_variable, "diversite_moyenne", "intervalle_de_confiance")]
+    
+    resUI = res[ , c(group_variable, "somme_diversite", "nombre_participation", "diversite_moyenne")]
+    resUI$diversite_moyenne <- paste("<b>",resUI$diversite_moyenne,"</b>")
+    colnames(resUI) = c(group_variable, "Somme des espèces observées", "Nombre de protocoles réalisés", "Diversité Moyenne")
     
   }
-  return(res)
+  result_list <- list(resCalc, resUI)
+  return(result_list)
 }
 
-observationCard <- function (dataset, groupVariable = character(0)) {
-  if (identical(groupVariable, character(0))){
+observationCard <- function (dataset, group_variable = character(0)) {
+  if (identical(group_variable, character(0))){
     res <- dataset %>%
       select(Numero_observation)%>%
       distinct()%>%
       summarise(NombreDObservations = length(Numero_observation))
+    resUI$nombre_observations <- paste("<b>",resUI$nombre_observations,"</b>")
+    colnames(resUI) = c("Nombre de protocoles réalisés")
   } else {
     res <- dataset %>%
-      select_at(c("Numero_observation", groupVariable)) %>%
+      select_at(c("Numero_observation", group_variable)) %>%
       distinct() %>%
-      dplyr::group_by_at(groupVariable) %>%
-      summarise(NombreDObservations = length(Numero_observation))
+      dplyr::group_by_at(group_variable) %>%
+      summarise(nombre_observations = length(Numero_observation))
+    resCalc = res
+    resUI = res[ , c(group_variable, "nombre_observations")]
+    resUI$nombre_observations <- paste("<b>",resUI$nombre_observations,"</b>")
+    colnames(resUI) = c(group_variable, "Nombre de protocoles réalisés")
+    
   }
-  return(res)
+  result_list <- list(resCalc, resUI)
+  return(result_list)
 }
 
 
@@ -477,25 +514,30 @@ makeGraph <- function(tools, results, i) {
 makeGraphEasy <- function (dataset){
   columnsNames <- names(dataset)
   x <- columnsNames[1]
-  y <- columnsNames[length(names(dataset))]
+  y <- columnsNames[2]
   
-  if ("IntervalleDeConfiance" %in% colnames(dataset)){
+  if ("intervalle_de_confiance" %in% colnames(dataset)){
     dataset <- dataset %>%
-      mutate(errorPlus = !!ensym(y) + IntervalleDeConfiance,
-             errorMoins = !!ensym(y) - IntervalleDeConfiance)
+      mutate(errorPlus = !!ensym(y) + intervalle_de_confiance,
+             errorMoins = !!ensym(y) - intervalle_de_confiance)
   }
+  graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))+
+    ggplot2::geom_col(ggplot2::aes(fill = !!ensym(x)))
   
-  ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))+
-    ggplot2::geom_col(ggplot2::aes(fill = !!ensym(x)))+
-    ggplot2::geom_errorbar(ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
-                           width = .2)+
+  if ("intervalle_de_confiance" %in% colnames(dataset)){
+    graph <- graph + ggplot2::geom_errorbar(data = dataset, ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
+                                            width = .2)
+  }
+  graph <- graph +
     ggplot2::theme_minimal()+
     ggplot2::theme(axis.text=element_text(size=12),
                    axis.title=element_text(size=16),
                    strip.text.x = element_text(size = 14),
                    legend.position = "none")
+  graph
 }
 
+#dataset <- res
 
 makeMapEasy <- function(dataset) {
   if (dataset[ , 1] == "Dep"){
@@ -527,7 +569,8 @@ getSpeciesNumber <- function(dataset) {
     summarise(Nombre = n())
 }
 
-makeTop <- function (dataset, topLength = 10){
+makeTop <- function (dataset, topLength = 20){
   res <- dataset[order(data.frame(dataset)[ , 2], decreasing = TRUE), ]
+  #resUI$nombre_observations <- paste("<b>",resUI$nombre_observations,"</b>")
   head(res, topLength)
 }
