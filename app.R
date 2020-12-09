@@ -32,7 +32,7 @@ ui <- fluidPage(
       HTML("<br><br>"),
       selectInput("choice", "Type d'interface :", c("image","code"), selected = "image"),
       actionButton("choose_ui","Valider le choix d'interface"),
-      
+      HTML("<br><br>"),
       uiOutput("code_text_ui"),
       uiOutput("code_button_ui"),
       uiOutput("cam_ui")
@@ -40,9 +40,7 @@ ui <- fluidPage(
     
     # Show the outputs from the treatment
     mainPanel(
-      uiOutput("Cards")#,
-      #tableOutput("Debug"),
-      #textOutput("Error")
+      uiOutput("Cards")
     )
   )
 )
@@ -102,7 +100,7 @@ server <- function(input, output) {
       
       # Breakdown code
       parsedCode <- reactive({
-        unlist(strsplit(input$code, ":"))
+        unlist(strsplit(isolate(input$code), ":"))
       })
     }
   })
@@ -123,17 +121,19 @@ server <- function(input, output) {
   })
   
   
+  
+  
   observeEvent(input$send_code,{
     # Variable initialization
     # Breakdown code
     parsedCode <- reactive({
-      unlist(strsplit(input$code, ":"))
+      unlist(strsplit(isolate(isolate(input$code)), ":"))
     })
     
     
     # Reactive containing a list for each tool.
     results <- reactive({
-      code <- input$code
+      code <- isolate(input$code)
       
       if (code != "" ){
         
@@ -222,30 +222,9 @@ server <- function(input, output) {
       }
     })
     
-    output$Debug <- renderTable({
-      fullCode <- input$code
-      Debug <- vector(mode = "list", length = 1)
-      # Découpage du code
-      informations <- codeInformation(fullCode)
-      # function utilisées
-      Debug[[1]] <- c(!"D" %in% informations$toolUsed, '!"D" %in% informations$toolUsed', 'Pas de données')
-      Debug[[2]] <- c(length(informations$toolUsed) == 1, 'length(toolUsed) == 1', 'Seulement les données')
-      Debug[[3]] <- c("M" %in% informations$toolUsed, '"M" %in% informations$toolUsed', 'utilisation de random all (non souhaité)')
-      Debug[[4]] <- c("P" %in% informations$toolUsed, '"P" %in% informations$toolUsed', 'Utilisation dune carte (non souhaité)')
-      Debug[[5]] <- c(!"Env" %in% informations$varUsed, '!"Env" %in% informations$varUsed', 'anque Environnement dans les variables')
-      Debug[[6]] <- c(!"R" %in% informations$toolUsed, '!"R" %in% informations$toolUsed', 'Pas de regroupement')
-      Debug[[7]] <- c("So" %in% informations$funUsed & !"Mo" %in% informations$funUsed, '"So" %in% informations$funUsed & !"Mo" %in% informations$funUsed', 'Pas de données')
-      Debug[[8]] <- c("Co" %in% informations$funUsed, '"Co" %in% informations$funUsed', 'Utilisation dun comptage (non souhaité)')
-      Debug[[9]] <- c(!"Pla" %in% informations$varUsed, '!"Pla" %in% informations$varUsed', 'Manque placette dans les variables')
-      Debug[[10]] <- c(!"Num" %in% informations$varUsed, '!"Num" %in% informations$varUsed', 'Manque numéro dobservation  dans les variables')
-      Debug[[11]] <- c(!"G" %in% informations$toolUsed, '!"G" %in% informations$toolUsed', 'Pas de graphique')
-      Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
-      matrix(unlist(Debug), ncol = 3, byrow = TRUE)
-    })
-    
     output$Error <- renderText({
       # Découpage du code
-      fullCode <- input$code
+      fullCode <- isolate(input$code)
       informations <- codeInformation(fullCode)
       missingVariable <- informations$varUsed[!informations$varUsed %in% as.character(EquivalenceVar$input)]
       message <- c()
@@ -277,7 +256,7 @@ server <- function(input, output) {
         rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
                                                         toolPosition, # repeated to be given as additional argument
                                                         parsedCode(),
-                                                        results()[[toolPosition]], input$code)
+                                                        results()[[toolPosition]], isolate(input$code))
       })
     )
     
@@ -296,30 +275,9 @@ server <- function(input, output) {
         NULL
     })
     
-    output$Debug <- renderTable({
-      fullCode <- input$code
-      Debug <- vector(mode = "list", length = 1)
-      # Découpage du code
-      informations <- codeInformation(fullCode)
-      # function utilisées
-      Debug[[1]] <- c(!"D" %in% informations$toolUsed, '!"D" %in% informations$toolUsed', 'Pas de données')
-      Debug[[2]] <- c(length(informations$toolUsed) == 1, 'length(toolUsed) == 1', 'Seulement les données')
-      Debug[[3]] <- c("M" %in% informations$toolUsed, '"M" %in% informations$toolUsed', 'utilisation de random all (non souhaité)')
-      Debug[[4]] <- c("P" %in% informations$toolUsed, '"P" %in% informations$toolUsed', 'Utilisation dune carte (non souhaité)')
-      Debug[[5]] <- c(!"Env" %in% informations$varUsed, '!"Env" %in% informations$varUsed', 'anque Environnement dans les variables')
-      Debug[[6]] <- c(!"R" %in% informations$toolUsed, '!"R" %in% informations$toolUsed', 'Pas de regroupement')
-      Debug[[7]] <- c("So" %in% informations$funUsed & !"Mo" %in% informations$funUsed, '"So" %in% informations$funUsed & !"Mo" %in% informations$funUsed', 'Pas de données')
-      Debug[[8]] <- c("Co" %in% informations$funUsed, '"Co" %in% informations$funUsed', 'Utilisation dun comptage (non souhaité)')
-      Debug[[9]] <- c(!"Pla" %in% informations$varUsed, '!"Pla" %in% informations$varUsed', 'Manque placette dans les variables')
-      Debug[[10]] <- c(!"Num" %in% informations$varUsed, '!"Num" %in% informations$varUsed', 'Manque numéro dobservation  dans les variables')
-      Debug[[11]] <- c(!"G" %in% informations$toolUsed, '!"G" %in% informations$toolUsed', 'Pas de graphique')
-      Debug[[12]] <- c(!"B" %in% informations$toolUsed, '!"B" %in% informations$toolUsed', 'Pas de barres derreur')
-      matrix(unlist(Debug), ncol = 3, byrow = TRUE)
-    })
-    
     output$Error <- renderText({
       # Découpage du code
-      fullCode <- input$code
+      fullCode <- isolate(input$code)
       informations <- codeInformation(fullCode)
       missingVariable <- informations$varUsed[!informations$varUsed %in% as.character(EquivalenceVar$input)]
       message <- c()
@@ -351,10 +309,11 @@ server <- function(input, output) {
         rv[[ as.character(toolPosition)]] <- callModule(renderCards, toolPosition,
                                                         toolPosition, # repeated to be given as additional argument
                                                         parsedCode(),
-                                                        results()[[toolPosition]][[2]], input$code)
+                                                        results()[[toolPosition]][[2]], isolate(input$code))
       })
     )
   })
+  
 }
 
 # Run the application
