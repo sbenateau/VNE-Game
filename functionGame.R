@@ -537,29 +537,25 @@ makeGraphEasy <- function (dataset){
   graph
 }
 
-#dataset <- res
 
 makeMapEasy <- function(dataset) {
-  if (dataset[ , 1] == "Dep"){
-    extraWD = "data"
-    if (!file.exists(file.path(extraWD, "departement.zip"))) {
-      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
-      download.file(githubURL, file.path(extraWD, "departement.zip"))
-      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
-    }
-    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                    quiet = TRUE) %>%
-      dplyr::rename(Departement = CODE_DEPT) %>%
-      sf::st_transform(2154)
-    
-    departements_L93 <- mapToPlot()
-    geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
-      sf::st_transform(2154)
-    
-    tmap::tm_shape(geoData) +
-      tmap::tm_borders() +
-      tmap::tm_fill(col = correspond(dataset[ , length(names(dataset))], EquivalenceVar))
+  # change parameters according to the scale
+  if ("Departement" %in% colnames(dataset)){
+    map_to_plot <- app_values$depart_map
+    join_by = "Departement"
+  } else if ("Departement" %in% colnames(dataset)) {
+    map_to_plot <- region_map()
+    join_by = "Region"
   }
+  
+  # join with the data
+  geoData = dplyr::left_join(map_to_plot, dataset, by = 'Region') %>%
+    sf::st_transform(2154)
+  
+  # make map
+  tmap::tm_shape(geoData) +
+    tmap::tm_borders() +
+    tmap::tm_fill(col = colnames(dataset)[2])
 }
 
 getSpeciesNumber <- function(dataset) {

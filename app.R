@@ -30,16 +30,20 @@ ui <- fluidPage(
       # Logo de l'application
       tags$img(src = "logo_papers.png", width = '100%'),
       HTML("<br><br>"),
+      # choix du type d'interface
       selectInput("choice", "Type d'interface :", c("image","code"), selected = "image"),
       actionButton("choose_ui","Valider le choix d'interface"),
       HTML("<br><br>"),
+      # interface pour code
       uiOutput("code_text_ui"),
       uiOutput("code_button_ui"),
+      # interface pour reconnaissance d'image
       uiOutput("cam_ui")
     ),
     
     # Show the outputs from the treatment
     mainPanel(
+      # shows the results
       uiOutput("Cards")
     )
   )
@@ -48,11 +52,12 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output) {
   
+  # add reactive values to store information between chunks
   rv <- reactiveValues(
     ui = "NULL"
   )
   
-  # make ui
+  # build conditionnaly UI
   observeEvent(input$choose_ui, {
     if (input$choice == "code"){
       rv$ui = "code"
@@ -64,6 +69,12 @@ server <- function(input, output) {
       output$code_button_ui <- renderUI({
         actionButton("send_code", "Validez le code", icon = NULL, width = NULL)
       })
+      
+      # Breakdown code
+      parsedCode <- reactive({
+        unlist(strsplit(isolate(input$code), ":"))
+      })
+      
     } else {
       rv$ui = "image"
       output$cam_ui <- renderUI({
@@ -76,12 +87,7 @@ server <- function(input, output) {
         output_width = 400,
         output_height = 300
       )
-    }
-  })
-  
-  
-  observe({
-    if (rv$ui == "image"){
+      
       # Breakdown code
       parsedCode <- reactive({
         req(camera_snapshot())
@@ -96,45 +102,41 @@ server <- function(input, output) {
         unlist(strsplit(code, ":"))
         
       })
-    } else if (rv$ui == "code") {
       
-      # Breakdown code
-      parsedCode <- reactive({
-        unlist(strsplit(isolate(input$code), ":"))
-      })
     }
   })
   
+  # Breakdown code
+  parsedCode <- reactive({
+    unlist(strsplit(isolate(input$code), ":"))
+  })
+
   #Import map
-  mapToPlot <- reactive({
-    extraWD = "data"
-    if (!file.exists(file.path(extraWD, "departement.zip"))) {
-      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
-      download.file(githubURL, file.path(extraWD, "departement.zip"))
-      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
-    }
-    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
+  depart_map <- reactive({
+    departements_L93 <- sf::st_read(dsn = "data", layer = "DEPARTEMENT",
                                     quiet = TRUE) %>%
       dplyr::rename(Departement = CODE_DEPT) %>%
       sf::st_transform(2154)
     departements_L93
   })
   
-  
+  #Import map
+  depart_map <- reactive({
+    regions_L93 <- sf::st_read(dsn = "data", layer = "REGION",
+                                    quiet = TRUE) %>%
+      dplyr::rename(Region = NOM_REG) %>%
+      sf::st_transform(2154)
+    regions_L93
+  })
   
   
   observeEvent(input$send_code,{
     # Variable initialization
-    # Breakdown code
-    parsedCode <- reactive({
-      unlist(strsplit(isolate(isolate(input$code)), ":"))
-    })
-    
+
     
     # Reactive containing a list for each tool.
     results <- reactive({
       code <- isolate(input$code)
-      
       if (code != "" ){
         
         # Get the data
@@ -144,7 +146,7 @@ server <- function(input, output) {
         
         #separate code to get clear instructions
         tools <- parsedCode()
-        # code = "DOis:AEnv"
+        # code = "DOis:ADep:C"
         #tools <- unlist(strsplit(code, ":"))
         
         # create a list with size = nomber of tools
@@ -169,14 +171,7 @@ server <- function(input, output) {
           } else if (toolname == "G"){
             results[[i]][[2]] <- makeGraphEasy(dataset = results[[i-1]][[1]])
           } else if (toolname == "C"){
-            if ("Departement" %in% colnames(results[[i-1]][[1]])){
-              departements_L93 <- mapToPlot()
-              geoData = dplyr::left_join(departements_L93, results[[i-1]][[1]], by = 'Departement') %>%
-                sf::st_transform(2154)
-              results[[i]][[2]] <- tmap::tm_shape(geoData) +
-                tmap::tm_borders() +
-                tmap::tm_fill(col = colnames(results[[i-1]][[1]])[2])
-            }
+            results[[i]][[2]] <- makeMapEasy(results[[i-1]][[1]])
           } else {
             msg <- paste0("Tool", tools[i], "seems to be mis-formated (code:", paste0(tools, collapse = ":"), ")\n")
             warning(msg)
