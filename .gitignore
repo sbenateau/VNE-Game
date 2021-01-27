@@ -2,3 +2,5 @@ rsconnect/
 .Rhistory
 .Rproj.user
 VNE-Game.Rproj
+opencv/
+test_code/opencv/
