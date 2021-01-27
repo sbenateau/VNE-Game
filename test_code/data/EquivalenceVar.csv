@@ -13,8 +13,11 @@
 12,Date,Dat
 13,Surface_zone,Sur
 14,Distance_bois,Boi
-15,Distance_prarie,Pra
-16,Distance_champs,Cha
+15,Distance_prairie,Pra
+16,Distance_champ,Cha
 17,Escargots,Esc
 18,Region,Reg
 19,Latitude,Lat
+20,Academie,Aca
+21,Annee,Ann
+22,Mois,Moi

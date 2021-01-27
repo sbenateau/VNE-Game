@@ -370,13 +370,13 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
       dplyr::summarise(
         somme_abondance = sum2(abondance),
         nombre_participation = length(abondance),
-        abondance_moyenne = mean2(abondance),
+        nombre_moyen_individus = mean2(abondance),
         intervalle_de_confiance = confidence_interval(abondance))
     
-    resCalc = res[ , c("abondance_moyenne", "intervalle_de_confiance")]
-    resUI = res[ , c("somme_abondance", "nombre_participation", "abondance_moyenne")]
-    resUI$abondance_moyenne <- paste("<b>",resUI$abondance_moyenne,"</b>")
-    colnames(resUI) = c("Somme de l'abondance", "Nombre de protocoles réalisés", "Abondance Moyenne")
+    resCalc = res[ , c("nombre_moyen_individus", "intervalle_de_confiance")]
+    resUI = res[ , c("somme_abondance", "nombre_participation", "nombre_moyen_individus")]
+    resUI$nombre_moyen_individus <- paste("<b>",resUI$nombre_moyen_individus,"</b>")
+    colnames(resUI) = c("Somme de l'abondance", "Nombre de protocoles réalisés", "Nombre moyen d'individus")
   } else if (group_variable %in% c("Latitude")) {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
@@ -396,14 +396,14 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
       dplyr::summarise(
         somme_abondance = sum2(abondance),
         nombre_participation = length(abondance),
-        abondance_moyenne = mean2(abondance),
+        nombre_moyen_individus = mean2(abondance),
         intervalle_de_confiance = confidence_interval(abondance)) %>%
       ungroup()
     
-    resCalc = res[ , c(group_variable, "abondance_moyenne", "intervalle_de_confiance")]
-    resUI = res[ , c(group_variable, "somme_abondance", "nombre_participation", "abondance_moyenne")]
-    resUI$abondance_moyenne <- paste("<b>",resUI$abondance_moyenne,"</b>")
-    colnames(resUI) = c(group_variable, "Somme de l'abondance", "Nombre de protocoles réalisés", "Abondance Moyenne")
+    resCalc = res[ , c(group_variable, "nombre_moyen_individus", "intervalle_de_confiance")]
+    resUI = res[ , c(group_variable, "somme_abondance", "nombre_participation", "nombre_moyen_individus")]
+    resUI$nombre_moyen_individus <- paste("<b>",resUI$nombre_moyen_individus,"</b>")
+    colnames(resUI) = c(group_variable, "Somme de l'abondance", "Nombre de protocoles réalisés", "Nombre moyen d'individus")
   }
   result_list <- list(resCalc, resUI)
   return(result_list)
@@ -495,7 +495,7 @@ makeGraphEasy <- function (dataset) {
   
   graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))
   
-  if ("Latitude" %in% colnames(dataset)){
+  if ("Latitude" %in% colnames(dataset) | "Longitude" %in% colnames(dataset)){
     graph <- graph + ggplot2::geom_point() +
       geom_smooth(method="lm", se=TRUE)
   } else {
