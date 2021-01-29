@@ -97,9 +97,11 @@ server <- function(input, output, session) {
     
     observeEvent(data_values, {
         for (i in c("oiseaux", "escargots", "sauvages", "vdt")){
-            #URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/test/papers/", i, ".csv"), .encoding = "UTF-8")
-        data_values[[i]] <- read.csv(paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
-                #text = URL_data_VNE
+            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/test/papers/", i, ".csv"), .encoding = "UTF-8")
+            
+            data_values[[i]] <- read.csv(
+                #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
+                text = URL_data_VNE
                 , encoding = 'UTF-8')
         }
     })
@@ -168,6 +170,8 @@ server <- function(input, output, session) {
             
             tools <- app_values$parced_code
             # code = "DOis:ADep:C"
+            # code = "DOis:AMoi:G"
+            
             #tools <- unlist(strsplit(code, ":"))
             
             # create a list with size = nomber of tools
@@ -202,17 +206,6 @@ server <- function(input, output, session) {
                 # TODO in case of typo, any default value?
             }
             
-            # Remove se column for display (only used to add error bars)
-            if (any(stringr::str_detect(tools,"Mo"))){
-                results[[which(str_detect(tools, "Mo"))]] <- results[[which(str_detect(tools, "Mo"))]][-which(names(results[[which(str_detect(tools, "Mo"))]]) == "se")]
-            }
-            # clean results
-            for (i in 1:length(tools)){
-                
-                if ("IntervalleDeConfiance" %in% colnames(results[[i]])){
-                    results[[i]] <- results[[i]][ , -which(colnames(results[[i]]) == "IntervalleDeConfiance")]
-                }
-            }
             app_values$results <- results
         }
         
@@ -241,13 +234,7 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
-        
-        
-        
-        
     })
-    
-    
 }
 
 # Run the application 

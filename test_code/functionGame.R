@@ -227,7 +227,7 @@ printPlot <- function (x) {
 #' @title uniteTags
 #'
 #' @description takes a list of HTML tags (type: list; class: shiny.tags)
-#' and return a single shiny tag concatening all others
+#' and return a single shiny tag concatenating all others
 uniteTags <- function(tags.list) {
   tagString <- ""
   sapply(tags.list, function(tag) {
@@ -425,6 +425,16 @@ diversityCard <- function (dataset, group_variable = character(0)) {
     resUI = res[ , c("somme_diversite", "nombre_participation", "diversite_moyenne")]
     resUI$diversite_moyenne <- paste("<b>",resUI$diversite_moyenne,"</b>")
     colnames(resUI) = c("Somme des espèces observées", "Nombre de protocoles réalisés", "Diversité Moyenne")
+  } else if (group_variable %in% c("Latitude")) {
+    res <- dataset %>%
+      dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
+      dplyr::ungroup()
+    
+    resCalc = res[ , c(group_variable, "Diversite")]
+    resUI = res[ , c(group_variable, "Diversite")]
+    resUI$abondance <- paste("<b>",resUI$Diversite,"</b>")
+    colnames(resUI) = c(group_variable, "Diversite")
   } else {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
