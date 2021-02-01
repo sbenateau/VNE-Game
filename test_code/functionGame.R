@@ -505,22 +505,25 @@ makeGraphEasy <- function (dataset) {
   
   graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))
   
-  if ("Latitude" %in% colnames(dataset) | "Longitude" %in% colnames(dataset)){
+  if ("Mois" %in% colnames(dataset) | "Annee" %in% colnames(dataset)){
+    graph <- graph + ggplot2::geom_point(size = 2, col = 2) +
+      ggplot2::geom_line(size = 2, col = 2)
+      
+  } else if ("Latitude" %in% colnames(dataset) | "Longitude" %in% colnames(dataset)){
     graph <- graph + ggplot2::geom_point() +
       geom_smooth(method="lm", se=TRUE)
   } else {
-    if ("intervalle_de_confiance" %in% colnames(dataset)) {
-      dataset <- dataset %>%
-        mutate(errorPlus = !!ensym(y) + intervalle_de_confiance,
-               errorMoins = !!ensym(y) - intervalle_de_confiance)
-    }
     graph <- graph + ggplot2::geom_col(ggplot2::aes(fill = !!ensym(x)))
-    
-    if ("intervalle_de_confiance" %in% colnames(dataset)) {
-      graph <- graph + ggplot2::geom_errorbar(data = dataset, ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
-                                              width = .2)
-    }
   }
+  
+  if ("intervalle_de_confiance" %in% colnames(dataset)) {
+    dataset <- dataset %>%
+      mutate(errorPlus = !!ensym(y) + intervalle_de_confiance,
+             errorMoins = !!ensym(y) - intervalle_de_confiance)
+    graph <- graph + ggplot2::geom_errorbar(data = dataset, ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
+                                            width = .2)
+  }
+  
   graph <- graph +
     ggplot2::theme_minimal()+
     ggplot2::theme(axis.text=element_text(size=12),
