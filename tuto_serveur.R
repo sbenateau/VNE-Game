@@ -12,3 +12,9 @@ nano /etc/shiny-server/shiny-server.conf
 
 # pour ajouter par exemple :
 preserve_logs true; # permet de concerver les log en cas de plantage
+
+# redémarrer le serveur 
+service shiny-server restart
+
+# sortir du serveur
+exit
