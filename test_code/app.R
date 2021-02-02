@@ -104,7 +104,12 @@ server <- function(input, output, session) {
             
             data_values[[i]] <- read.csv(
                 #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
+<<<<<<< HEAD
                 text = URL_data_VNE, encoding = 'UTF-8')
+=======
+                text = URL_data_VNE
+                , encoding = 'UTF-8')
+>>>>>>> 525ba1fe48732e49340a5bd3bcb2764ca6501c49
         }
     })
     
@@ -270,6 +275,7 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
+<<<<<<< HEAD
         
         output$error_message <- renderText({
             if(!app_values$code_valid){
@@ -278,6 +284,8 @@ server <- function(input, output, session) {
                 NULL
             }
         })
+=======
+>>>>>>> 525ba1fe48732e49340a5bd3bcb2764ca6501c49
     })
 }
 
