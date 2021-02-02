@@ -1,5 +1,5 @@
-######################################################
-#      VNE Game
+#
+#      Galaxy-Papers
 #
 #         Authors: Simon Benateau, Sebastien Turpin and Elie Arnaud
 #
@@ -9,7 +9,7 @@
 #           - Calculate indices
 #           - make visualisation
 #
-#####################################################
+#
 
 library(shiny)
 library(shinyBS) # for the collapse part 
@@ -60,6 +60,8 @@ ui <-   fluidPage(
                tabPanel("Résultats", value = "resu",
                         # shows the results
                         uiOutput("Cards"),
+                        span(textOutput("error_message"), style = "color:red; font-weight: bold"),
+                        tags$div(tags$br()),
                         actionButton("new_code_resu", "Entrer un nouveau code manuellement",  icon("text", lib = "glyphicon"),
                                      style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                         actionButton("new_reco_resu", "Utiliser la webcam ou l'appareil photo à nouveau", icon("camera", lib = "glyphicon"),
@@ -72,9 +74,10 @@ ui <-   fluidPage(
 # Define server logic required to run the application
 server <- function(input, output, session) {
     
-    #Import map
+    # Import Data
     # initiate reactive values
     app_values = reactiveValues(code = NULL,
+                                code_valid = FALSE,
                                 depart_map = sf::st_read(dsn = "data", layer = "DEPARTEMENT",
                                                          quiet = TRUE) %>%
                                     dplyr::rename(Departement = CODE_DEPT) %>%
@@ -101,8 +104,7 @@ server <- function(input, output, session) {
             
             data_values[[i]] <- read.csv(
                 #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
-                text = URL_data_VNE
-                , encoding = 'UTF-8')
+                text = URL_data_VNE, encoding = 'UTF-8')
         }
     })
     
@@ -157,16 +159,48 @@ server <- function(input, output, session) {
     })
     
     
+    # check the code
+    
+    
+    
     # run the app
     observeEvent(app_values$code, {
         
+        # check if the code is ok
+        app_values$code_valid <- FALSE # hypothesis code is false
+        print(app_values$code)
         if (app_values$code != "") {
-            app_values$parced_code = unlist(strsplit(app_values$code, ":"))
+            print(app_values$code)
+            app_values$parced_code <- unlist(strsplit(app_values$code, ":"))
         } else {
-            app_values$parced_code = NULL
+            print(app_values$code)
+            app_values$parced_code <- NULL
         }
         
         if (!is.null(app_values$parced_code)){
+            
+            # first card must be data
+            if (!grepl("D", app_values$parced_code[1])){
+                app_values$error_message <- "Il faut obligatoirement poser une carte importer des données en première position"
+                # 
+            } else if (length(app_values$parced_code) > 3) {
+                app_values$error_message <- "Attention plus de 3 cartes de traitements ont été rentrées, vérifiez votre analyse"
+            } else if(length(app_values$parced_code) > 1) {
+                if (grepl("D", app_values$parced_code[2])) {
+                    app_values$error_message <- "il n'est possible d'importer des données qu'une seule fois"
+                } else if (length(app_values$parced_code) == 2 & !substring(app_values$parced_code[3], 0, 1) %in% c("E", "V", "A", "N")){
+                    app_values$error_message <- "Attention, il faut utiliser une carte manipuler les données en deuxième position"
+                } else if (length(app_values$parced_code) == 3 & !app_values$parced_code[3] %in% c("T", "C", "G")){
+                    app_values$error_message <- "Attention, il faut utiliser une carte visualiser les données en troisième position"
+                } else {
+                    app_values$code_valid <- TRUE
+                }
+            } else {
+                app_values$code_valid <- TRUE
+            }
+        }
+        
+        if (app_values$code_valid){
             
             tools <- app_values$parced_code
             # code = "DOis:ADep:C"
@@ -212,8 +246,10 @@ server <- function(input, output, session) {
         
         # Procedurally generate UI by calling multiple times the renderCards module
         output$Cards <- renderUI({
+            print(app_values$parced_code)
+            print(app_values$code_valid)
             # Check for input's content
-            if(length(app_values$parced_code) != 0){
+            if(length(app_values$parced_code) != 0 & app_values$code_valid){
                 do.call(bsCollapse,
                         lapply(seq_along(app_values$parced_code), function (toolPosition){
                             renderCardsUI(toolPosition, app_values$parced_code)
@@ -234,6 +270,14 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
+        
+        output$error_message <- renderText({
+            if(!app_values$code_valid){
+                app_values$error_message
+            } else {
+                NULL
+            }
+        })
     })
 }
 
