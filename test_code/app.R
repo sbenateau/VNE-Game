@@ -105,6 +105,7 @@ server <- function(input, output, session) {
             data_values[[i]] <- read.csv(
                 #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
                 text = URL_data_VNE, encoding = 'UTF-8')
+
         }
     })
     
@@ -270,7 +271,7 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
-        
+
         output$error_message <- renderText({
             if(!app_values$code_valid){
                 app_values$error_message
