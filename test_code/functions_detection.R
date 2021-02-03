@@ -78,8 +78,8 @@ test_orientation <- function (results) {
 }
 
 equivalence_code <- data.frame(    
-  id = c(11, 13, 7, 16, 1, 9, 12, 14, 21, 3, 4, 5, 6, 30, 10, 17, 15, 31, 32, 33, 34, 35, 2, 8, 22),
-  tool = c("DOis", ":A", "Env", ":G", "DVdt", ":N", ":E", "DSau", ":C", "Dep", "Cha", "Pra", "Boi", "Hum", ":V", "Ann", "Moi", "Lon", "Lat", "Lgr","Hab","Aca", "DEsc", ":T", "Reg")
+  id = c(11, 13, 7, 16, 1, 9, 12, 14, 21, 3, 4, 5, 6, 30, 10, 17, 15, 31, 32, 33, 34, 35, 2, 8, 22, 36, 37),
+  tool = c("DOis", ":A", "Env", ":G", "DVdt", ":N", ":E", "DSau", ":C", "Dep", "Cha", "Pra", "Boi", "Hum", ":V", "Ann", "Moi", "Lon", "Lat", "Lgr","Hab","Aca", "DEsc", ":T", "Reg", "Tau", "Dif")
 )
 
 coordinates_to_code <- function(results_from_identification){
