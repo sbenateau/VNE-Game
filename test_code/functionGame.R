@@ -147,6 +147,8 @@ getDataInitial <- function(data_values, observatory) {
     #     dplyr::mutate(Departement = as.factor(substr(Code_postal, 0, 2)))
     #   jeuDeDonneesReduction <- jeuDeDonneesReduction[ , -5]
     #   jeuDeDonneesReduction
+  } else if (observatory == "Sau") {
+    jeuDeDonnees <- data_values[["sauvages"]]
   }
 }
 
@@ -410,6 +412,13 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
 }
 
 diversityCard <- function (dataset, group_variable = character(0)) {
+  if ("Epigé" %in% unique(dataset$Espece)){
+    dataset = subset(dataset, select = -c(Num_quadrat))
+    dataset <- dataset %>% 
+      group_by(.dots = names(dataset)[-grep("Nombre_individus", names(dataset))]) %>%
+      summarise(Nombre_individus = sum2(Nombre_individus))
+  }
+  
   if (identical(group_variable, character(0))) {
     res <- dataset %>%
       dplyr::group_by(Numero_observation) %>%
@@ -499,6 +508,10 @@ total_species_card <- function (dataset) {
 }
 
 makeGraphEasy <- function (dataset) {
+  if ("Annee" %in% colnames(dataset)){
+    dataset <- filter(dataset, Annee > 2000 | Annee < 2023)
+  }
+  
   columnsNames <- names(dataset)
   x <- columnsNames[1]
   y <- columnsNames[2]
@@ -506,7 +519,9 @@ makeGraphEasy <- function (dataset) {
   graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))
   
   if ("Mois" %in% colnames(dataset) | "Annee" %in% colnames(dataset)){
-    graph <- graph + ggplot2::geom_point(size = 2, col = 2) +
+
+    graph <- graph + 
+      ggplot2::geom_point(size = 3, col = 2) +
       ggplot2::geom_line(size = 2, col = 2)
       
   } else if ("Latitude" %in% colnames(dataset) | "Longitude" %in% colnames(dataset)){
@@ -521,14 +536,15 @@ makeGraphEasy <- function (dataset) {
       mutate(errorPlus = !!ensym(y) + intervalle_de_confiance,
              errorMoins = !!ensym(y) - intervalle_de_confiance)
     graph <- graph + ggplot2::geom_errorbar(data = dataset, ggplot2::aes(ymax = errorPlus, ymin = errorMoins),
-                                            width = .2)
+                                            width = .2, size = 1.2)
   }
   
   graph <- graph +
+    expand_limits(y = 0) +
     ggplot2::theme_minimal()+
-    ggplot2::theme(axis.text=element_text(size=12),
-                   axis.title=element_text(size=16),
-                   strip.text.x = element_text(size = 14),
+    ggplot2::theme(axis.text=element_text(size=20),
+                   axis.title=element_text(size=24),
+                   strip.text.x = element_text(size = 20),
                    legend.position = "none")
   graph
 }
