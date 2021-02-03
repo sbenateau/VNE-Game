@@ -100,12 +100,12 @@ server <- function(input, output, session) {
     
     observeEvent(data_values, {
         for (i in c("oiseaux", "escargots", "sauvages", "vdt")){
-            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/test/papers/", i, ".csv"), .encoding = "UTF-8")
+            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/papers/", i, ".csv"), .encoding = "UTF-8")
             
             data_values[[i]] <- read.csv(
                 #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
                 text = URL_data_VNE, encoding = 'UTF-8')
-
+            
         }
     })
     
@@ -183,13 +183,10 @@ server <- function(input, output, session) {
             # first card must be data
             if (!grepl("D", app_values$parced_code[1])){
                 app_values$error_message <- "Il faut obligatoirement poser une carte importer des données en première position"
-                # 
             } else if (length(app_values$parced_code) > 3) {
                 app_values$error_message <- "Attention plus de 3 cartes de traitements ont été rentrées, vérifiez votre analyse"
             } else if(length(app_values$parced_code) > 1) {
-                if (grepl("D", app_values$parced_code[2])) {
-                    app_values$error_message <- "il n'est possible d'importer des données qu'une seule fois"
-                } else if (length(app_values$parced_code) == 2 & !substring(app_values$parced_code[3], 0, 1) %in% c("E", "V", "A", "N")){
+                if (length(app_values$parced_code) == 2 & !substring(app_values$parced_code[2], 0, 1) %in% c("E", "V", "A", "N")){
                     app_values$error_message <- "Attention, il faut utiliser une carte manipuler les données en deuxième position"
                 } else if (length(app_values$parced_code) == 3 & !app_values$parced_code[3] %in% c("T", "C", "G")){
                     app_values$error_message <- "Attention, il faut utiliser une carte visualiser les données en troisième position"
@@ -271,7 +268,7 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
-
+        
         output$error_message <- renderText({
             if(!app_values$code_valid){
                 app_values$error_message
