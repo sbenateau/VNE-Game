@@ -30,22 +30,27 @@ ui <-   fluidPage(
     ),
     navbarPage(div(img(src="logo_papers.png", height = 25),""), id = "galaxy_papers",
                tabPanel("Le projet", value = "proj",
-                        tags$div(class="header", checked=NA,
-                                 tags$img(src="logo_papers.png"),
-                                 tags$h2("Mais qu’est-ce donc que Galaxy Papers ?"),
-                                 tags$p("Le projet Galaxy Papers est né d’une demande des enseignants ! 
+                        fluidRow(
+                            column(6,
+                                   tags$h2("Mais qu’est donc Galaxy Papers ?"),
+                                   tags$p("Le projet Galaxy Papers est né d’une demande des enseignants ! 
                                         Ils sont de plus en plus nombreux à nous demander la possibilité 
                                         de télécharger les données collectivement produites par le réseau Vigie-Nature École. 
                                         Galaxy Papers permet d’aller plus loin. Cet outil permet d'accéder à l'ensemble des données 
                                         produites par le réseau d'établissements qui contribue au programme Vigie-Nature École et de 
                                         les analyser avec des outils adaptés. L’objectif étant d’aider les élèves (et les enseignants) 
                                         à comprendre comment se déroule une analyse de données en écologie."),
-                                 tags$h2("Commencer à utiliser Galaxy Papers")
-                        ),
-                        actionButton("new_code_proj", "Entrer un code manuellement", icon("text", lib = "glyphicon"),
-                                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-                        actionButton("new_reco_proj", "Utiliser la webcam ou l'appareil photo", icon("camera", lib = "glyphicon"),
-                                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                                   tags$h2("Commencer à utiliser Galaxy Papers"),
+                                   
+                                   actionButton("new_code_proj", "Entrer un code manuellement", icon("text", lib = "glyphicon"),
+                                                style="color: #fff; background-color: #5eb69dff; border-color: #5eb69dff00"),
+                                   actionButton("new_reco_proj", "Utiliser la webcam ou l'appareil photo", icon("camera", lib = "glyphicon"),
+                                                style="color: #fff; background-color: #5eb69dff; border-color: #5eb69dff00")
+                            ),
+                            column(6,
+                                   tags$img(src="logo_papers.png", height = 200)
+                            ), 
+                        )
                ),
                navbarMenu("Lancer une analyse de données",
                           tabPanel("Utiliser la webcam ou l'appareil photo", value = "reco",
@@ -54,7 +59,7 @@ ui <-   fluidPage(
                           tabPanel("Entrer un code manuellement", value = "code",
                                    textInput("code", "Entrez votre code :", value = ""),
                                    actionButton("validation_code", "Valider le code", 
-                                                style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                                                style="color: #fff; background-color: #5eb69dff; border-color: #5eb69dff00")
                           )
                ),
                tabPanel("Résultats", value = "resu",
@@ -63,10 +68,31 @@ ui <-   fluidPage(
                         span(textOutput("error_message"), style = "color:red; font-weight: bold"),
                         tags$div(tags$br()),
                         actionButton("new_code_resu", "Entrer un nouveau code manuellement",  icon("text", lib = "glyphicon"),
-                                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+                                     style="color: #fff; background-color: #19b7adff; border-color: #5eb69dff00"),
                         actionButton("new_reco_resu", "Utiliser la webcam ou l'appareil photo à nouveau", icon("camera", lib = "glyphicon"),
-                                     style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                                     style="color: #fff; background-color: #19b7adff; border-color: #5eb69dff00")
                )
+    ),
+    tags$div(tags$br()),
+    tags$div(tags$br()),
+    tags$div(tags$br()),
+    fluidRow(
+        column(3, align="center",
+               tags$p("Un programme du"),
+               
+               tags$a(tags$img(src="MNHN_logo.png"), href="https://www.mnhn.fr")
+        ),
+        column(3, align="center",
+               tags$p("Développé par"),
+               tags$a(tags$img(src="VNE_logo.png"), href="https://www.vigienature-ecole.fr"),
+        ),
+        column(6, align="center",
+               tags$p("Financé par"),
+               tags$a(tags$img(src="Hermes_logo.png"), href="https://www.fondationdentreprisehermes.org/fr"),
+               tags$a(tags$img(src="OFB_logo.png"), href="https://ofb.gouv.fr/")
+               
+               
+        )
     )
     
 )
@@ -105,7 +131,7 @@ server <- function(input, output, session) {
             data_values[[i]] <- read.csv(
                 #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
                 text = URL_data_VNE, encoding = 'UTF-8')
-
+            
         }
     })
     
@@ -169,12 +195,9 @@ server <- function(input, output, session) {
         
         # check if the code is ok
         app_values$code_valid <- FALSE # hypothesis code is false
-        print(app_values$code)
         if (app_values$code != "") {
-            print(app_values$code)
             app_values$parced_code <- unlist(strsplit(app_values$code, ":"))
         } else {
-            print(app_values$code)
             app_values$parced_code <- NULL
         }
         
@@ -244,8 +267,6 @@ server <- function(input, output, session) {
         
         # Procedurally generate UI by calling multiple times the renderCards module
         output$Cards <- renderUI({
-            print(app_values$parced_code)
-            print(app_values$code_valid)
             # Check for input's content
             if(length(app_values$parced_code) != 0 & app_values$code_valid){
                 do.call(bsCollapse,
@@ -268,8 +289,8 @@ server <- function(input, output, session) {
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
         )
-
-                output$error_message <- renderText({
+        
+        output$error_message <- renderText({
             if(!app_values$code_valid){
                 app_values$error_message
             } else {
