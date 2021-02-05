@@ -156,6 +156,45 @@ getDataInitial <- function(data_values, observatory) {
   }
 }
 
+
+# remove 01_ from factors but keeps order
+removeBeginingCategories <- function (input, Column){
+  input <- data.frame(input)
+  if (Column != "None"){
+    Column <- as.numeric(Column)
+    if(sapply(input[Column], class) == "factor" | sapply(input[Column], class) == "character"){
+      if(is.character(sapply(input[Column], class))){
+        input[ , Column] <- as.factor(input[ , Column])
+      }
+      levelsColumn <- levels(input[ , Column])
+      if(any(grepl(pattern = "^[0-9][0-9]_", levelsColumn))){
+        # lock order
+        LevelToChange = grep(pattern = "^[0-9][0-9]_", levelsColumn)
+        levelsColumn[LevelToChange] = substr(levelsColumn[LevelToChange], 4, nchar(levelsColumn[LevelToChange]))
+        levels(input[ , Column]) <- levelsColumn
+      }
+    }
+  }
+  input
+}
+
+nice_column_names <- function(x) {
+  switch (x,
+          Espece = "Espèce",
+          Nombre_individus = "Nombre d'individus",
+          Region = "Région",
+          Academie = "Académie",
+          Annee = "Année",
+          Type_de_milieu = "Type de milieu",
+          Surface_zone = "Surface de la zone",
+          Distance_bois = "Distance au bois le plus proche",
+          Distance_prairie = "Distance à la prairie la plus proche",
+          Distance_champ = "Distance au champ le plus proche",
+          x
+  )
+}
+
+
 # functions for the game ----
 
 # [deprecated]
@@ -548,7 +587,17 @@ makeGraphEasy <- function (dataset) {
   x <- columnsNames[1]
   y <- columnsNames[2]
   
-  graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))
+  # change names to something nice
+  x_label = nice_column_names(x)
+  y_label = nice_column_names(y)
+  
+  # remove label order 
+  dataset <- removeBeginingCategories(dataset, 1)
+  dataset <- removeBeginingCategories(dataset, 2)
+  
+  graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y))) +
+    xlab(x_label) +
+    ylab(y_label)
   
   if ("Mois" %in% colnames(dataset) | "Annee" %in% colnames(dataset)){
     
