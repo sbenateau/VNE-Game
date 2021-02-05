@@ -1,4 +1,3 @@
-#
 #      Galaxy-Papers
 #
 #         Authors: Simon Benateau, Sebastien Turpin and Elie Arnaud
@@ -8,8 +7,6 @@
 #           - Import data
 #           - Calculate indices
 #           - make visualisation
-#
-#
 
 library(shiny)
 library(shinyBS) # for the collapse part 

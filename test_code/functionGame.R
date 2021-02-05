@@ -60,6 +60,10 @@ lengthSupZero <- function(x) {
   length(x[x>0])
 }
 
+length_unique <- function(x) {
+  length(unique(na.omit(x)))
+}
+
 #' @title se
 #'
 #' @param x a numeric vector
@@ -379,7 +383,7 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
     resUI = res[ , c("somme_abondance", "nombre_participation", "nombre_moyen_individus")]
     resUI$nombre_moyen_individus <- paste("<b>",resUI$nombre_moyen_individus,"</b>")
     colnames(resUI) = c("Somme de l'abondance", "Nombre de protocoles réalisés", "Nombre moyen d'individus")
-  } else if (group_variable %in% c("Latitude")) {
+  } else if (group_variable %in% c("Latitude", "Longitude", "Longueur_rue")) {
     res <- dataset %>%
       dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
       dplyr::summarise(abondance = sum2(Nombre_individus)) %>%
@@ -419,10 +423,24 @@ diversityCard <- function (dataset, group_variable = character(0)) {
       summarise(Nombre_individus = sum2(Nombre_individus))
   }
   
+  if ("Plantain majeur" %in% unique(dataset$Espece)){
+    protocole = "sauvages"
+  } else {
+    protocole = "defaut"
+  }
+  
   if (identical(group_variable, character(0))) {
-    res <- dataset %>%
-      dplyr::group_by(Numero_observation) %>%
-      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
+    if (protocole == "sauvages"){
+      res <- dataset %>%
+        dplyr::group_by(Numero_observation) %>%
+        dplyr::summarise(Diversite = length_unique(Espece))
+    } else {
+      res <- dataset %>%
+        dplyr::group_by(Numero_observation) %>%
+        dplyr::summarise(Diversite = lengthSupZero(Nombre_individus))
+    }
+    
+    res <- res %>%
       dplyr::ungroup() %>%
       dplyr::summarise(
         somme_diversite = sum(Diversite, na.rm = TRUE),
@@ -434,21 +452,35 @@ diversityCard <- function (dataset, group_variable = character(0)) {
     resUI = res[ , c("somme_diversite", "nombre_participation", "diversite_moyenne")]
     resUI$diversite_moyenne <- paste("<b>",resUI$diversite_moyenne,"</b>")
     colnames(resUI) = c("Somme des espèces observées", "Nombre de protocoles réalisés", "Diversité Moyenne")
-  } else if (group_variable %in% c("Latitude")) {
-    res <- dataset %>%
-      dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
-      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
-      dplyr::ungroup()
+  } else if (group_variable %in% c("Latitude", "Longitude", "Longueur_rue")) {
+    if (protocole == "sauvages"){
+      res <- dataset %>%
+        dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        dplyr::summarise(Diversite = length_unique(Espece)) %>%
+        dplyr::ungroup()
+    } else {
+      res <- dataset %>%
+        dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
+        dplyr::ungroup()
+    }
     
     resCalc = res[ , c(group_variable, "Diversite")]
     resUI = res[ , c(group_variable, "Diversite")]
     resUI$abondance <- paste("<b>",resUI$Diversite,"</b>")
     colnames(resUI) = c(group_variable, "Diversite")
   } else {
-    res <- dataset %>%
-      dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
-      dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
-      dplyr::ungroup() %>%
+    if (protocole == "sauvages"){
+      res <- dataset %>%
+        dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        dplyr::summarise(Diversite = length_unique(Espece))
+    } else {
+      res <- dataset %>%
+        dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        dplyr::summarise(Diversite = lengthSupZero(Nombre_individus))
+    }
+    
+    res <- res %>%
       dplyr::group_by_at(group_variable) %>%
       dplyr::summarise(
         somme_diversite = sum(Diversite, na.rm = TRUE),
@@ -519,11 +551,11 @@ makeGraphEasy <- function (dataset) {
   graph <- ggplot2::ggplot(dataset, ggplot2::aes(x = !!ensym(x), y = !!ensym(y)))
   
   if ("Mois" %in% colnames(dataset) | "Annee" %in% colnames(dataset)){
-
+    
     graph <- graph + 
       ggplot2::geom_point(size = 3, col = 2) +
       ggplot2::geom_line(size = 2, col = 2)
-      
+    
   } else if ("Latitude" %in% colnames(dataset) | "Longitude" %in% colnames(dataset)){
     graph <- graph + ggplot2::geom_point() +
       geom_smooth(method="lm", se=TRUE)
