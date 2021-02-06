@@ -3,5 +3,5 @@ rsconnect/
 .Rproj.user
 VNE-Game.Rproj
 opencv/
-test_code/opencv/
 .RData
+cam.png
