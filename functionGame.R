@@ -497,7 +497,7 @@ makeGraphEasy <- function (dataset) {
   
   # change names to something nice
   x_label = nice_column_names(x)
-  y_label = nice_column_names(y)
+  y_label = str_wrap(nice_column_names(y), 12)
   
   # remove label order 
   dataset <- removeBeginingCategories(dataset, 1)
