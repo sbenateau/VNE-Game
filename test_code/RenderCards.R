@@ -17,20 +17,7 @@ renderCardsUI <- function(id, parsedCode) {
   # return UI
   return(
     bsCollapsePanel(
-      title = switch(toolID,
-                     G = "Graphique",
-                     A = "Calculer le nombre moyen d’individus",
-                     E = "Calculer le nombre moyen d’espèces",
-                     N = "Compter le nombre d’observations",
-                     V = "Compter le nombre de fois où les espèces ont été vues",
-                     M = "Mélanger les données",
-                     B = "Graphique avec barres d'erreurs",
-                     R = "Regrouper des lignes",
-                     S = "Scientifique",
-                     C = "Carte",
-                     D = "Données",
-                     T = "Top",
-                     "Autre outil"),
+      title = tool_names(toolID),
       tagList(
         switch(toolID,
                G = plotOutput(ns(id)),

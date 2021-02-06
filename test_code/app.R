@@ -130,7 +130,7 @@ server <- function(input, output, session) {
                 text = URL_data_VNE, encoding = 'UTF-8')
             
         }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        })
+    })
     
     # get image
     camera_snapshot <- callModule(
@@ -210,7 +210,7 @@ server <- function(input, output, session) {
                     app_values$error_message <- "Attention, il faut utiliser une carte manipuler les données en deuxième position"
                 } else if (length(app_values$parced_code) == 3 & !app_values$parced_code[3] %in% c("T", "C", "G")){
                     app_values$error_message <- "Attention, il faut utiliser une carte visualiser les données en troisième position"
-                } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 1, 4) %in% c("Dep","Reg")){
+                } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 2, 4) %in% c("Dep","Reg")){
                     app_values$error_message <- "Attention, il faut utiliser un jeton Département ou Région pour faire une carte"
                 } else {
                     app_values$code_valid <- TRUE
@@ -268,10 +268,11 @@ server <- function(input, output, session) {
         output$Cards <- renderUI({
             # Check for input's content
             if(length(app_values$parced_code) != 0 & app_values$code_valid){
-                do.call(bsCollapse,
-                        lapply(seq_along(app_values$parced_code), function (toolPosition){
-                            renderCardsUI(toolPosition, app_values$parced_code)
-                        })
+                do.call(bsCollapse, c(
+                    lapply(seq_along(app_values$parced_code), function (toolPosition){
+                        renderCardsUI(toolPosition, app_values$parced_code)
+                    }), open = tool_names(substring(app_values$parced_code[length(app_values$parced_code)],0,1))
+                )
                 )
             }
             else
@@ -287,6 +288,7 @@ server <- function(input, output, session) {
                                                                 app_values$parced_code,
                                                                 app_values$results[[toolPosition]][[2]], isolate(app_values$code))
             })
+            
         )
         
         output$error_message <- renderText({
