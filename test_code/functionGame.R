@@ -190,6 +190,14 @@ nice_column_names <- function(x) {
           Distance_bois = "Distance au bois le plus proche",
           Distance_prairie = "Distance à la prairie la plus proche",
           Distance_champ = "Distance au champ le plus proche",
+          diversite_moyenne = "Diversité moyenne",
+          nombre_moyen_individus = "Nombre moyen d'individus",
+          Humidite_sol_lors_observation = "Humidite du sol lors de l'observation",
+          Difficulte_enfoncer_crayon = "Difficulté à enfoncer un crayon",
+          Taupinieres = "Taupinières",
+          Surface_zone = "Surface de la zone",
+          Longueur_rue = "Longueur de la rue",
+          nombre_observations = "Nombre d'observations",
           x
   )
 }
@@ -283,124 +291,6 @@ uniteTags <- function(tags.list) {
   tagString <- tagList(tagString)
   return(tagString)
 }
-
-
-#' @title codeInformation
-#'
-#' @description parse the input code and gives information on the tools,
-#' the variables and the function used
-#' @param fullCode a string containing the input code from the user
-codeInformation <- function (fullCode) {
-  AllTools <- unlist(strsplit(fullCode, ":"))
-  AllToolsNames <- unlist(lapply(AllTools, function(x) str_sub(x,1,1)))
-  toolUsed <- AllToolsNames[!sapply(AllToolsNames, function (x) x == "S")]
-  # variables utilisées
-  varUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][a-z]"))
-  # fonctions utilisées
-  funUsed <-unlist(stringr::str_extract_all(AllTools, "[A-Z][a-z][A-Z]"))
-  funUsed <- str_sub(funUsed, start = 1, end = 2)
-  
-  informations <- list(toolUsed, varUsed, funUsed)
-  names(informations) <- c("toolUsed", "varUsed", "funUsed")
-  informations
-}
-
-
-# All the card that make calculations functions will generate a list : the table for calculations and the table for UI
-
-#' @title makeGraph
-#'
-#' @description make graph from the result of the previous tool
-#' @param results the results from the previous tools
-#' @param tools is the list of the tools used
-#' @param i the number of the step
-makeGraph <- function(tools, results, i) {
-  # get parameters (improve by locating the graph within the code)
-  Parameters <- separateParametersTreatment(tools[i])
-  # get the name of the column to check few thing
-  colNamesData <- colnames(results[[i-1]])
-  # Add errors if the columns are not in the code
-  # if sp is in the dataset, separate by species (if species as columns then change)
-  #TODO Add
-  #if ("Espece" %in% colNamesData & Parameters[[1]] != "Esp" & Parameters[[1]] != "Esp") facet = ggplot2::facet_wrap(.~Espece) else facet = NULL
-  # if data not summarised plot points else plot barplot
-  if (nrow(results[[i-1]]) < 30) representation <- ggplot2::geom_col(ggplot2::aes_string(fill = correspond(Parameters[[1]], EquivalenceVar))) else representation <- geom_jitter(aes_string(col = correspond(Parameters[[1]], EquivalenceVar)))
-  # graph is too specific right now
-  ggplot2::ggplot(results[[i-1]], ggplot2::aes_string(x = correspond(Parameters[[1]], EquivalenceVar), y = correspond(Parameters[[2]], EquivalenceVar)), environment = environment()) +
-    representation +
-    #facet +
-    ggplot2::theme_minimal()+
-    ggplot2::theme(axis.text=element_text(size=12),
-                   axis.title=element_text(size=16),
-                   strip.text.x = element_text(size = 14))
-}
-
-#' @title makeSummary
-#'
-#' @description make graph from the result of the previous tool
-#' @param results the results from the previous tools
-#' @param i the number of the step
-makeSummary <- function (tools, results, i) {
-  Parameters <- separateParametersTreatment(tools[i])
-  # calculate se for error bars later
-  if (Parameters[[3]] == "Mo") {
-    res <- results[[i-1]] %>%
-      dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = c("mean","confidence_interval"))
-    # rename with the right name
-    colnames(res)[which(colnames(res) == "mean")] <- correspond(Parameters[[2]], EquivalenceVar)
-  } else {
-    res <- results[[i-1]] %>%
-      dplyr::group_by_at(correspond(Parameters[[1]], EquivalenceVar)) %>%
-      dplyr::summarise_at(.vars = correspond(Parameters[[2]], EquivalenceVar), .funs = correspond(Parameters[[3]], EquivalenceFun))
-  }
-  return(res)
-}
-
-#' @title makeErrorBars
-#'
-#' @description add ErrorBars to a graph
-#' @param results the results from the previous tools
-#' @param i the number of the step
-makeErrorBars <- function(tools, results, i) {
-  Parameters <- separateParametersTreatment(tools[i-1])
-  results[[i-1]]$data <- results[[i-1]]$data %>%
-    dplyr::mutate(ymin = Nombre_individus + confidence_interval,
-                  ymax = Nombre_individus - confidence_interval)
-  return(results[[i-1]] + geom_errorbar(aes(ymin = ymin, ymax = ymax), width = 0.2))
-}
-
-
-# not functionning
-#' @title makeMap
-#'
-#' @description make a map with the departements
-#' @param results the results from the previous tools
-#' @param i the number of the step
-makeMap <- function(tools, results, i) {
-  Parameters <- separateParametersTreatment(tools[i])
-  if (!Parameters[[2]] == "Dep") {
-    extraWD = "data"
-    if (!file.exists(file.path(extraWD, "departement.zip"))) {
-      githubURL <- "https://github.com/statnmap/blog_tips/raw/master/2018-07-14-introduction-to-mapping-with-sf-and-co/data/departement.zip"
-      download.file(githubURL, file.path(extraWD, "departement.zip"))
-      unzip(file.path(extraWD, "departement.zip"), exdir = extraWD)
-    }
-    departements_L93 <- sf::st_read(dsn = extraWD, layer = "DEPARTEMENT",
-                                    quiet = TRUE) %>%
-      dplyr::rename(Departement = CODE_DEPT) %>%
-      sf::st_transform(2154)
-    
-    departements_L93 <- mapToPlot()
-    geoData = dplyr::left_join(departements_L93, results[[i-1]], by = 'Departement') %>%
-      sf::st_transform(2154)
-    
-    tmap::tm_shape(geoData) +
-      tmap::tm_borders() +
-      tmap::tm_fill(col = correspond(Parameters[[2]], EquivalenceVar))
-  }
-}
-
 
 # Make abundance according to one variable
 
@@ -599,6 +489,8 @@ makeGraphEasy <- function (dataset) {
     xlab(x_label) +
     ylab(y_label)
   
+  
+  
   if ("Mois" %in% colnames(dataset) | "Annee" %in% colnames(dataset)){
     
     graph <- graph + 
@@ -627,6 +519,10 @@ makeGraphEasy <- function (dataset) {
                    axis.title=element_text(size=24),
                    strip.text.x = element_text(size = 20),
                    legend.position = "none")
+  
+  if ("Region" %in% colnames(dataset)){
+    graph <- graph + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  }
   graph
 }
 
