@@ -536,6 +536,9 @@ makeGraphEasy <- function (dataset) {
     ggplot2::theme(axis.text=element_text(size=20),
                    axis.title=element_text(size=24),
                    strip.text.x = element_text(size = 20),
+                   axis.title.x = element_text(vjust = -2),
+                   axis.title.y = element_text(vjust = 2.3),
+                   plot.margin=unit(c(1,1,1.5,1.2),"cm"),
                    legend.position = "none")
   
   if ("Region" %in% colnames(dataset)){
