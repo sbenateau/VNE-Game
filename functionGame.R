@@ -64,7 +64,7 @@ length_unique <- function(x) {
   length(unique(na.omit(x)))
 }
 
-#' @title se
+#' @title Confidence interval
 #'
 #' @param x a numeric vector
 confidence_interval <- function(x) {
@@ -223,23 +223,6 @@ tool_names <- function (toolID){
 
 # functions for the game ----
 
-# [deprecated]
-# get the information for the tool separated
-separateTools <- function (code, sep = ":") {
-  # get tool names and operation as separated string
-  whereToCut <- gregexpr("([A-Z])(?![a-z])", code, perl = TRUE)
-  tools <-  c()
-  if (length(whereToCut[[1]]) >  1) {
-    for (i in 1:(length(whereToCut[[1]])-1)) {
-      tools[i] <- substr(code, whereToCut[[1]][[i]], whereToCut[[1]][[i+1]]-1)
-    }
-    tools[length(whereToCut[[1]])] <- substr(code, whereToCut[[1]][[length(whereToCut[[1]])]], nchar(code))
-    tools
-  } else {
-    code
-  }
-}
-
 #' @title separateParametersTreatment
 #'
 # get the 'arguments' of each tool
@@ -258,20 +241,6 @@ separateParametersTreatment <- function (code) {
   informationR
 }
 
-#' @title randomAll
-#'
-#' @description randomize all columns of a data.frame
-#' @param df An input data.frame
-randomAll <- function(df) {
-  df2 <- df %>%
-    dplyr::mutate_all(as.character)
-  for (i in 1:nrow(df)) {
-    for (j in 1:ncol(df)) {
-      df2[i,j] <- df[sample(nrow(df), size = 1), sample(ncol(df), size = 1)]
-    }
-  }
-  df2
-}
 
 
 #' @title correspond
@@ -285,12 +254,6 @@ correspond <- function (input, reference) {
   colnames(inputDf) <- "input"
   inputColumns <- dplyr::inner_join(inputDf, reference, by="input")
   as.character(inputColumns$translation)
-}
-
-# [deprecated?]
-printPlot <- function (x) {
-  plot(1, 1, type = "n", axes = FALSE, ann = FALSE)
-  text(1, 1, x)
 }
 
 # Function for handling shiny tags ----
@@ -495,6 +458,7 @@ makeGraphEasy <- function (dataset) {
   x <- columnsNames[1]
   y <- columnsNames[2]
   
+
   # change names to something nice
   x_label = nice_column_names(x)
   y_label = str_wrap(nice_column_names(y), 12)

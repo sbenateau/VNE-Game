@@ -210,8 +210,8 @@ server <- function(input, output, session) {
                     app_values$error_message <- "Attention, il faut utiliser une carte manipuler les données en deuxième position"
                 } else if (length(app_values$parced_code) == 3 & !app_values$parced_code[3] %in% c("T", "C", "G")){
                     app_values$error_message <- "Attention, il faut utiliser une carte visualiser les données en troisième position"
-                } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 2, 4) %in% c("Dep","Reg")){
-                    app_values$error_message <- "Attention, il faut utiliser un jeton Département ou Région pour faire une carte"
+                # } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 2, 4) %in% c("Dep","Reg")){
+                #     app_values$error_message <- "Attention, il faut utiliser un jeton Département ou Région pour faire une carte"
                 } else {
                     app_values$code_valid <- TRUE
                 }
