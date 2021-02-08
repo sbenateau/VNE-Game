@@ -91,7 +91,7 @@ getDataInitial <- function(data_values, observatory) {
     #   jeuDeDonneesReduction$Difficulte_enfoncer_crayon <- factor(as.character(jeuDeDonneesReduction$Difficulte_enfoncer_crayon), levels=c("tres_facile", "facile", "peu_difficile", "difficile", ""))
     #   levels(jeuDeDonneesReduction$Difficulte_enfoncer_crayon)[5] <- "Donnees_manquantes"
     #   return(jeuDeDonneesReduction)
-    jeuDeDonnees
+    
   }
   else if (observatory == "Ois") {
     jeuDeDonnees <- data_values[["oiseaux"]]
@@ -126,7 +126,7 @@ getDataInitial <- function(data_values, observatory) {
     #   jeuDeDonneesReduction$Distance_champs[jeuDeDonneesReduction$Distance_champs ==""] <- "Non renseigné"
     #   levels(jeuDeDonneesReduction$Departement)[levels(jeuDeDonneesReduction$Departement) =="  "] <- "Non renseigné"
     #   jeuDeDonneesReduction
-    jeuDeDonnees
+    
   } else if (observatory == "Esc") {
     jeuDeDonnees <- data_values[["escargots"]]
     #   jeuDeDonnees <- data.table::fread(paste0(directory,"Escargot.csv"))
@@ -153,7 +153,12 @@ getDataInitial <- function(data_values, observatory) {
     #   jeuDeDonneesReduction
   } else if (observatory == "Sau") {
     jeuDeDonnees <- data_values[["sauvages"]]
+    
+  } else if (observatory == "Spi"){
+    jeuDeDonnees <- data_values[["spipoll"]]
+    
   }
+  jeuDeDonnees
 }
 
 
@@ -295,6 +300,7 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
     colnames(resUI) = c("Somme de l'abondance", "Nombre de protocoles réalisés", "Nombre moyen d'individus")
   } else if (group_variable %in% c("Latitude", "Longitude", "Longueur_rue")) {
     res <- dataset %>%
+      filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
       dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
       dplyr::summarise(abondance = sum2(Nombre_individus)) %>%
       dplyr::ungroup()
@@ -305,6 +311,7 @@ abundanceCard <- function (dataset, group_variable = character(0)) {
     colnames(resUI) = c(group_variable, "Abondance")
   } else {
     res <- dataset %>%
+      filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
       dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
       dplyr::summarise(abondance = sum2(Nombre_individus)) %>%
       dplyr::ungroup() %>%
@@ -366,11 +373,13 @@ diversityCard <- function (dataset, group_variable = character(0)) {
     if (protocole == "sauvages"){
       res <- dataset %>%
         dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
         dplyr::summarise(Diversite = length_unique(Espece)) %>%
         dplyr::ungroup()
     } else {
       res <- dataset %>%
         dplyr::group_by_at(c("Numero_observation", group_variable)) %>%
+        filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
         dplyr::summarise(Diversite = lengthSupZero(Nombre_individus)) %>%
         dplyr::ungroup()
     }
@@ -391,6 +400,7 @@ diversityCard <- function (dataset, group_variable = character(0)) {
     }
     
     res <- res %>%
+      filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
       dplyr::group_by_at(group_variable) %>%
       dplyr::summarise(
         somme_diversite = sum(Diversite, na.rm = TRUE),
@@ -419,6 +429,7 @@ observationCard <- function (dataset, group_variable = character(0)) {
     colnames(resUI) = c("Nombre de protocoles réalisés")
   } else {
     res <- dataset %>%
+      filter(rlang::eval_tidy(rlang::parse_expr(paste0("!",group_variable, " == ''")))) %>%
       select_at(c("Numero_observation", group_variable)) %>%
       distinct() %>%
       dplyr::group_by_at(group_variable) %>%
