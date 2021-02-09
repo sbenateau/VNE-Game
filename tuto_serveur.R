@@ -15,6 +15,8 @@ preserve_logs true; # permet de concerver les log en cas de plantage
 
 # redémarrer le serveur 
 service shiny-server restart
+# démarrer le serveur
+service shiny-server start
 
 # sortir du serveur
 exit

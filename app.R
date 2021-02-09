@@ -7,10 +7,14 @@
 #           - Import data
 #           - Calculate indices
 #           - make visualisation
+# 
+
+Sys.setlocale(category = "LC_ALL", locale = "French")
 
 library(shiny)
 library(shinyBS) # for the collapse part 
 library(shinysense) # for the capture of image
+
 # load the functions to run the game
 source('functionGame.R') # calculations
 source('RenderCards.R') # module to add the values
@@ -135,7 +139,6 @@ server <- function(input, output, session) {
             }
         }
         
-        print(head(data_values[["spipoll"]]))
     })
     
     # get image
