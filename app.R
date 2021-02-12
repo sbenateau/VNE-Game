@@ -30,25 +30,7 @@ ui <-   fluidPage(
     navbarPage(div(img(src="logo_papers.png", height = 25),""), id = "galaxy_papers",
                tabPanel("Le projet", value = "proj",
                         fluidRow(
-                            column(6,
-                                   tags$h2("Mais qu’est donc Galaxy Papers ?"),
-                                   tags$p("Le projet Galaxy Papers est né d’une demande des enseignants ! 
-                                        Ils sont de plus en plus nombreux à nous demander la possibilité 
-                                        de télécharger les données collectivement produites par le réseau Vigie-Nature École. 
-                                        Galaxy Papers permet d’aller plus loin. Cet outil permet d'accéder à l'ensemble des données 
-                                        produites par le réseau d'établissements qui contribue au programme Vigie-Nature École et de 
-                                        les analyser avec des outils adaptés. L’objectif étant d’aider les élèves (et les enseignants) 
-                                        à comprendre comment se déroule une analyse de données en écologie."),
-                                   tags$h2("Commencer à utiliser Galaxy Papers"),
-                                   
-                                   actionButton("new_code_proj", "Entrer un code manuellement", icon("text", lib = "glyphicon"),
-                                                style="color: #fff; background-color: #5eb69dff; border-color: #5eb69dff00"),
-                                   actionButton("new_reco_proj", "Utiliser la webcam ou l'appareil photo", icon("camera", lib = "glyphicon"),
-                                                style="color: #fff; background-color: #5eb69dff; border-color: #5eb69dff00")
-                            ),
-                            column(6,
-                                   tags$img(src="logo_papers.png", height = 200)
-                            ), 
+                            includeHTML("htlm_templates/paper.html"),
                         )
                ),
                navbarMenu("Lancer une analyse de données",
@@ -76,22 +58,7 @@ ui <-   fluidPage(
     tags$div(tags$br()),
     tags$div(tags$br()),
     fluidRow(
-        column(3, align="center",
-               tags$p("Un programme du"),
-               
-               tags$a(tags$img(src="MNHN_logo.png"), href="https://www.mnhn.fr")
-        ),
-        column(3, align="center",
-               tags$p("Développé par"),
-               tags$a(tags$img(src="VNE_logo.png"), href="https://www.vigienature-ecole.fr"),
-        ),
-        column(6, align="center",
-               tags$p("Financé par"),
-               tags$a(tags$img(src="Hermes_logo.png"), href="https://www.fondationdentreprisehermes.org/fr"),
-               tags$a(tags$img(src="OFB_logo.png"), href="https://ofb.gouv.fr/")
-               
-               
-        )
+        includeHTML("htlm_templates/footer.html")
     )
     
 )
