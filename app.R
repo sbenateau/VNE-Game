@@ -9,8 +9,6 @@
 #           - make visualisation
 # 
 
-Sys.setlocale(category = "LC_ALL", locale = "French")
-
 library(shiny)
 library(shinyBS) # for the collapse part 
 library(shinysense) # for the capture of image
@@ -131,11 +129,11 @@ server <- function(input, output, session) {
             if (i == "spipoll"){
                 data_values[[i]] <- fread("data/spipoll.csv", encoding = "Latin-1")
             } else {
-            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/papers/", i, ".csv"), .encoding = "UTF-8")
-            
-            data_values[[i]] <- read.csv(
-                #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
-                text = URL_data_VNE, encoding = 'UTF-8')
+                URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/papers/", i, ".csv"), .encoding = "UTF-8")
+                
+                data_values[[i]] <- read.csv(
+                    #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
+                    text = URL_data_VNE, encoding = 'UTF-8')
             }
         }
         
@@ -219,8 +217,8 @@ server <- function(input, output, session) {
                     app_values$error_message <- "Attention, il faut utiliser une carte manipuler les données en deuxième position"
                 } else if (length(app_values$parced_code) == 3 & !app_values$parced_code[3] %in% c("T", "C", "G")){
                     app_values$error_message <- "Attention, il faut utiliser une carte visualiser les données en troisième position"
-                # } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 2, 4) %in% c("Dep","Reg")){
-                #     app_values$error_message <- "Attention, il faut utiliser un jeton Département ou Région pour faire une carte"
+                    # } else if (app_values$parced_code[3] == "C" & !substring(app_values$parced_code[2], 2, 4) %in% c("Dep","Reg")){
+                    #     app_values$error_message <- "Attention, il faut utiliser un jeton Département ou Région pour faire une carte"
                 } else {
                     app_values$code_valid <- TRUE
                 }

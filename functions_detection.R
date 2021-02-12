@@ -84,9 +84,9 @@ equivalence_code <- data.frame(
 
 coordinates_to_code <- function(results_from_identification){
   if (!is.null(results_from_identification)){
-  results_from_identification_ordered <- results_from_identification[order(results_from_identification$top_left_x), ]
-  tools <- dplyr::left_join(results_from_identification_ordered, equivalence_code, by = c("py.ids" = "id"))
-  code <- paste(tools$tool, collapse = "")
+    results_from_identification_ordered <- results_from_identification[order(results_from_identification$top_left_x), ]
+    tools <- dplyr::left_join(results_from_identification_ordered, equivalence_code, by = c("py.ids" = "id"))
+    code <- paste(tools$tool, collapse = "")
   } else {
     code = ""
   }
