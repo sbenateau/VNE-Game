@@ -9,13 +9,14 @@ detection_of_codes <- function(image, show_image = FALSE) {
 
   library(reticulate)
   
-  py$image <- image
   # write image with R
-  py_run_file("read_and_detect_aruco.py")
+  source_python("read_and_detect_aruco.py")
+  
+  res <- detect(image)
   
   # get results to R
-  if (!is.null(unlist(py$corners))){
-    corners <- matrix(unlist(py$corners), ncol = 8, byrow = TRUE)
+  if (!is.null(unlist(res[[1]]))){
+    corners <- matrix(unlist(res[[1]]), ncol = 8, byrow = TRUE)
     top_left_x <- corners[, 1]
     top_right_x <- corners[, 2]
     bottom_right_x <- corners[, 3]
@@ -25,7 +26,7 @@ detection_of_codes <- function(image, show_image = FALSE) {
     bottom_right_y <- corners[, 7]
     bottom_left_y <- corners[, 8]
     
-    results <- data.frame(py$ids, top_left_x, top_right_x, bottom_right_x, bottom_left_x, 
+    results <- data.frame(py.ids = res[[2]], top_left_x, top_right_x, bottom_right_x, bottom_left_x, 
                           top_left_y, top_right_y, bottom_right_y, bottom_left_y)
     return(results)
   } else {
