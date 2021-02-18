@@ -47,6 +47,7 @@ ui <-   fluidPage(
                         # shows the results
                         uiOutput("Cards"),
                         span(textOutput("error_message"), style = "color:red; font-weight: bold"),
+                        span(textOutput("debug"), style = "color:red; font-weight: bold"),
                         tags$div(tags$br()),
                         actionButton("new_code_resu", "Entrer un nouveau code manuellement",  icon("text", lib = "glyphicon"),
                                      style="color: #fff; background-color: #19b7adff; border-color: #5eb69dff00"),
@@ -119,7 +120,7 @@ server <- function(input, output, session) {
         
         # print image from cam
         picture <- camera_snapshot()
-
+        
         
         results_from_detection <- detection_of_codes(picture, show_image = TRUE)
         code <- coordinates_to_code(results_from_detection)
@@ -268,6 +269,12 @@ server <- function(input, output, session) {
                 app_values$error_message
             } else {
                 NULL
+            }
+        })
+        
+        output$debug <- renderText({
+            if(!app_values$code_valid){
+                app_values$parced_code
             }
         })
     })
