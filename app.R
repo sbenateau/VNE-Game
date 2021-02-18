@@ -118,12 +118,10 @@ server <- function(input, output, session) {
     observeEvent(camera_snapshot(), {
         
         # print image from cam
-        png(filename="cam.png", width = 1200/2, height = 720/2)
-        par(mar = c(0,0,0,0))
-        plot(camera_snapshot())
-        dev.off()
+        picture <- camera_snapshot()
+
         
-        results_from_detection <- detection_of_codes("cam.png", show_image = TRUE)
+        results_from_detection <- detection_of_codes(picture, show_image = TRUE)
         code <- coordinates_to_code(results_from_detection)
         
         app_values$code = code
