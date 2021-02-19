@@ -1,7 +1,7 @@
 # generate virtualenv
 # python3 -m venv opencv
 # . opencv/bin/activate
-# pip install opencv-contrib-python
+# pip3 install opencv-contrib-python
 
 # initiate reticulate with the virtual environment
 reticulate::use_virtualenv("opencv/", required = TRUE)

@@ -33,7 +33,7 @@ git clone https://github.com/sbenateau/duduch.git
 ``` bash
 python3 -m venv opencv
 . opencv/bin/activate
-pip install opencv-contrib-python
+pip3 install opencv-contrib-python
 ```
 
 # Launch
