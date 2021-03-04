@@ -94,9 +94,9 @@ server <- function(input, output, session) {
     
     observeEvent(data_values, {
         for (i in c("oiseaux", "escargots", "sauvages", "vdt", "spipoll")){
-            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/papers/", i, ".csv"), .encoding = "UTF-8")
+            URL_data_VNE <- RCurl::getURL(paste0("https://depot.vigienature-ecole.fr/datasets/papers/", i, ".csv"))
             if (i == "spipoll"){
-                data_values[[i]] <- data.table::fread(text = URL_data_VNE, fill = TRUE, encoding = "UTF-8")
+                data_values[[i]] <- data.table::fread(text = URL_data_VNE, fill = TRUE)
             } else {
                 data_values[[i]] <- read.csv(
                     #paste0("../../../github/Requetes-et-restitutions/R-pour-restitutions/import_add_data/papers/",i,".csv")
